@@ -117,8 +117,9 @@
   @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
   /* ---- HOME ---- */
-  .home-layout { max-width: 1080px; margin: 0 auto; padding: 44px 24px 40px; display: grid; grid-template-columns: 300px 1fr; gap: 36px; align-items: start; }
-  @media (max-width: 860px) { .home-layout { grid-template-columns: 1fr; } }
+  .home-layout { position: relative; padding: 44px 24px 40px; }
+  .home-layout .recent-panel { position: absolute; left: 24px; top: 44px; width: 300px; }
+  @media (max-width: 1180px) { .home-layout .recent-panel { position: static; width: auto; max-width: 440px; margin: 0 auto 30px; } }
 
   .recent-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
   .recent-head { padding: 14px 18px 10px; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); border-bottom: 1px solid var(--border); }
@@ -129,7 +130,7 @@
   .recent-meta { font-size: 11.5px; color: var(--text-3); margin-top: 3px; }
   .recent-empty { padding: 20px 18px; font-size: 13px; color: var(--text-3); font-weight: 300; }
 
-  .home-main { text-align: center; }
+  .home-main { text-align: center; max-width: 640px; margin: 0 auto; }
   .home-eyebrow { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
   .home-heading { font-family: 'Outfit', sans-serif; font-size: 34px; font-weight: 800; color: var(--navy); line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 12px; }
   .home-sub { color: var(--text-2); font-size: 15.5px; font-weight: 300; margin-bottom: 40px; max-width: 420px; margin-left: auto; margin-right: auto; }
@@ -280,8 +281,8 @@
     flex: 1; padding: 10px 0; border-radius: var(--radius-sm); border: none;
     font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition);
   }
-  .action-claim { background: var(--navy); color: #fff; }
-  .action-claim:hover { background: var(--navy-mid); }
+  .action-claim { background: var(--card); color: var(--navy); border: 2px solid var(--navy); }
+  .action-claim:hover { background: var(--green-bg); }
   .action-reject { background: var(--card); color: var(--red); border: 2px solid var(--red-bd); }
   .action-reject:hover { background: var(--red-bg); }
   .action-tbc { background: var(--card); color: var(--text-2); border: 2px solid var(--border); }
@@ -1112,6 +1113,19 @@ function tbcLead(id) { updateLead(id, { TBCBy: ME.email }, 'Marked TBC.'); }
 function undoTBC(id) { updateLead(id, { TBCBy: null }, 'TBC removed - back to open.'); }
 function setQuality(id, rating) { updateLead(id, { QualityRating: rating }, 'Quality feedback saved - future searches learn from this.'); }
 
+function insertStamp(id) {
+  const box = document.getElementById('note-' + id);
+  if (!box) return;
+  const now = new Date();
+  const stamp = (box.value && !box.value.endsWith('\n') ? '\n' : '') +
+    '[' + now.toLocaleDateString('en-GB') + ' ' +
+    now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' - ' + displayName(ME.email) + '] ';
+  const pos = box.selectionStart != null ? box.selectionStart : box.value.length;
+  box.value = box.value.slice(0, pos) + stamp + box.value.slice(pos);
+  const newPos = pos + stamp.length;
+  box.focus();
+  box.setSelectionRange(newPos, newPos);
+}
 async function saveNote(id) {
   const box = document.getElementById('note-' + id);
   if (!box) return;
@@ -1163,8 +1177,10 @@ function exportClaimedCSV() {
 
 /* ---------------- TBC screen ---------------- */
 let tbcMode = 'all';
+let tbcDisplayIds = null;
 async function openTBC(mode) {
   tbcMode = (mode === 'mine') ? 'mine' : 'all';
+  tbcDisplayIds = null;
   goTo('screen-tbc');
   document.getElementById('tbc-heading').textContent = tbcMode === 'mine' ? 'My TBC Leads' : 'Review Queue';
   document.getElementById('tbc-grid').innerHTML = '';
@@ -1175,8 +1191,10 @@ async function openTBC(mode) {
   } catch (e) { toast('Could not load the queue: ' + e.message, true); }
 }
 function renderTBC() {
-  let open = tbcRows.filter(r => !r.ClaimedBy && !r.RejectedBy);
-  if (tbcMode === 'mine') open = open.filter(r => r.TBCBy && String(r.TBCBy).toLowerCase() === ME.email.toLowerCase());
+  let eligible = tbcRows.filter(r => !r.ClaimedBy && !r.RejectedBy);
+  if (tbcMode === 'mine') eligible = eligible.filter(r => r.TBCBy && String(r.TBCBy).toLowerCase() === ME.email.toLowerCase());
+  if (!tbcDisplayIds) tbcDisplayIds = new Set(eligible.map(r => r.Id));
+  const open = tbcRows.filter(r => tbcDisplayIds.has(r.Id));
   const tbcCount = open.filter(r => r.TBCBy).length;
   document.getElementById('tbc-sub').textContent = tbcMode === 'mine'
     ? open.length + ' lead' + (open.length === 1 ? '' : 's') + ' you marked TBC, newest first.'
@@ -1188,14 +1206,23 @@ function renderTBC() {
     const cols = '3fr 1fr 1.4fr';
     grid.innerHTML = open.length === 0 ? '' :
       '<div class="lead-table"><div class="table-head" style="grid-template-columns:' + cols + ';"><div>Company</div><div>Generated</div><div></div></div>' +
-      open.map(r =>
-        '<div class="table-row" style="grid-template-columns:' + cols + ';" onclick="openLeadModal(' + r.Id + ', true)">' +
+      open.map(r => {
+        let btns;
+        if (r.RejectedBy) {
+          btns = '<button class="btn-unclaim" style="color:var(--text-2);border-color:var(--border);" onclick="undoReject(' + r.Id + ')">Undo Rejection</button>';
+        } else if (r.ClaimedBy) {
+          btns = String(r.ClaimedBy).toLowerCase() === ME.email.toLowerCase()
+            ? '<button class="btn-unclaim" onclick="unclaimLead(' + r.Id + ')">Unclaim</button>'
+            : '<span class="row-dim">Claimed by ' + esc(displayName(r.ClaimedBy)) + '</span>';
+        } else {
+          btns = '<button class="btn-unclaim" style="color:var(--text-2);border-color:var(--border);" onclick="undoTBC(' + r.Id + ')">Undo TBC</button>' +
+            '<button class="btn-unclaim" style="color:var(--green);border-color:var(--green-bd);" onclick="claimLead(' + r.Id + ')">Claim</button>';
+        }
+        return '<div class="table-row" style="grid-template-columns:' + cols + ';" onclick="openLeadModal(' + r.Id + ', true)">' +
         '<div class="row-name">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' +
         '<div class="row-dim">' + fmtDate(r.GeneratedDate) + '</div>' +
-        '<div onclick="event.stopPropagation()" style="display:flex;gap:8px;justify-content:flex-end;">' +
-        '<button class="btn-unclaim" style="color:var(--text-2);border-color:var(--border);" onclick="undoTBC(' + r.Id + ')">Undo TBC</button>' +
-        '<button class="btn-unclaim" style="color:var(--green);border-color:var(--green-bd);" onclick="claimLead(' + r.Id + ')">Claim</button></div></div>'
-      ).join('') + '</div>';
+        '<div onclick="event.stopPropagation()" style="display:flex;gap:8px;justify-content:flex-end;">' + btns + '</div></div>';
+      }).join('') + '</div>';
   } else {
     grid.style.display = '';
     const keep = sessionRows; sessionRows = open;            // reuse card renderer against TBC data
@@ -1229,9 +1256,10 @@ function openLeadModal(id, withNotes) {
   if (withNotes) {
     document.getElementById('modal-body').innerHTML = '<div class="modal-grid"><div>' + detail + '</div>' +
       '<aside class="notes-side"><div class="modal-section" style="margin-top:0;"><h4>Notes</h4>' +
-      '<textarea class="note-box" id="note-' + r.Id + '" style="min-height:260px;" placeholder="Add your notes about this lead...">' + esc(r.LeadNotes || '') + '</textarea>' +
-      '<button class="btn-sm" style="margin-top:10px;" onclick="saveNote(' + r.Id + ')">Save note</button>' +
-      '<div class="row-dim" style="margin-top:8px;font-size:11px;">Saved onto the lead record in SharePoint.</div></div></aside></div>';
+      '<textarea class="note-box" id="note-' + r.Id + '" style="min-height:260px;" placeholder="Add your notes about this lead..." onkeydown="if(event.ctrlKey && event.key === \';\'){event.preventDefault();insertStamp(' + r.Id + ');}">' + esc(r.LeadNotes || '') + '</textarea>' +
+      '<div style="display:flex;gap:8px;margin-top:10px;"><button class="btn-sm" onclick="saveNote(' + r.Id + ')">Save note</button>' +
+      '<button class="btn-sm ghost" onclick="insertStamp(' + r.Id + ')" title="Or press Ctrl+; in the notes box">+ Time stamp</button></div>' +
+      '<div class="row-dim" style="margin-top:8px;font-size:11px;">Ctrl+; inserts a time stamp. Saved onto the lead record in SharePoint.</div></div></aside></div>';
   } else {
     document.getElementById('modal-body').innerHTML = detail;
   }
@@ -1273,6 +1301,17 @@ async function loadBTInline(id) {
     box.innerHTML = '<div class="card-desc">Could not load BT records: ' + esc(e.message) + '</div>';
   }
 }
+
+/* ---------------- auto-refresh when returning to the tab ---------------- */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !account) return;
+  if (document.getElementById('dialog-overlay').classList.contains('open')) return;
+  if (document.getElementById('modal-overlay').classList.contains('open')) return;
+  if (document.getElementById('screen-tbc').classList.contains('active')) openTBC(tbcMode);
+  else if (document.getElementById('screen-claimed').classList.contains('active')) openClaimed();
+  else if (document.getElementById('screen-home').classList.contains('active')) loadHome();
+  else if (document.getElementById('screen-results').classList.contains('active') && !watchTimer) refreshResults();
+});
 
 /* ---------------- start ---------------- */
 initMsal();
