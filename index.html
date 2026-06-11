@@ -310,6 +310,10 @@
   }
   .note-box:focus { outline: none; border-color: var(--navy); }
   .note-save { margin-top: 6px; padding: 6px 12px; font-size: 11.5px; }
+  .modal.with-notes { max-width: 980px; }
+  .modal-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 26px; align-items: start; }
+  @media (max-width: 760px) { .modal-grid { grid-template-columns: 1fr; } }
+  .notes-side { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; position: sticky; top: 0; }
 
   .empty-state { text-align: center; padding: 70px 24px; color: var(--text-3); }
   .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
@@ -1126,16 +1130,13 @@ function renderClaimed() {
   const mine = claimedRows;
   document.getElementById('claimed-sub').textContent = mine.length + ' lead' + (mine.length === 1 ? '' : 's') + ' claimed by ' + displayName(ME.email);
   document.getElementById('claimed-empty').style.display = mine.length ? 'none' : 'block';
-  const cols = '1.9fr 1.2fr 0.8fr 2.2fr 1.3fr';
-  const head = '<div class="table-head" style="grid-template-columns:' + cols + ';"><div>Company</div><div>Sector</div><div>Claimed</div><div>Notes</div><div></div></div>';
+  const cols = '3fr 1fr 1.4fr';
+  const head = '<div class="table-head" style="grid-template-columns:' + cols + ';"><div>Company</div><div>Claimed</div><div></div></div>';
   document.getElementById('claimed-table').style.display = mine.length ? 'block' : 'none';
   document.getElementById('claimed-table').innerHTML = head + mine.map(r =>
-    '<div class="table-row' + (r.__gone || !r.ClaimedBy || r.RejectedBy ? ' is-gone' : '') + '" style="grid-template-columns:' + cols + ';align-items:start;" onclick="openLeadModal(' + r.Id + ')">' +
-    '<div class="row-name">' + esc(r.Title) + '<div class="row-dim" style="font-weight:300;">' + esc(r.Region || '') + '</div></div>' +
-    '<div class="row-dim">' + esc(r.Sector || '') + '</div>' +
+    '<div class="table-row' + (r.__gone || !r.ClaimedBy || r.RejectedBy ? ' is-gone' : '') + '" style="grid-template-columns:' + cols + ';" onclick="openLeadModal(' + r.Id + ', true)">' +
+    '<div class="row-name">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' +
     '<div class="row-dim">' + fmtDate(r.ClaimedDate) + '</div>' +
-    '<div onclick="event.stopPropagation()"><textarea class="note-box" id="note-' + r.Id + '" placeholder="Notes...">' + esc(r.LeadNotes || '') + '</textarea>' +
-    '<button class="btn-sm ghost note-save" onclick="saveNote(' + r.Id + ')">Save note</button></div>' +
     '<div onclick="event.stopPropagation()" style="display:flex;gap:8px;justify-content:flex-end;">' +
     '<button class="btn-unclaim" onclick="unclaimLead(' + r.Id + ')">Unclaim</button>' +
     '<button class="btn-unclaim" style="color:var(--amber);border-color:var(--amber-bd);" onclick="rejectLead(' + r.Id + ')">Reject</button></div></div>'
@@ -1174,18 +1175,35 @@ function renderTBC() {
     : open.length + ' lead' + (open.length === 1 ? '' : 's') + ' awaiting a decision (' + tbcCount + ' marked TBC), newest first.';
   document.getElementById('tbc-empty').style.display = open.length ? 'none' : 'block';
   const grid = document.getElementById('tbc-grid');
-  const keep = sessionRows; sessionRows = open;            // reuse card renderer against TBC data
-  grid.innerHTML = open.map(cardHTML).join('');
-  sessionRows = keep;
+  if (tbcMode === 'mine') {
+    grid.style.display = 'block';
+    const cols = '3fr 1fr 1.4fr';
+    grid.innerHTML = open.length === 0 ? '' :
+      '<div class="lead-table"><div class="table-head" style="grid-template-columns:' + cols + ';"><div>Company</div><div>Generated</div><div></div></div>' +
+      open.map(r =>
+        '<div class="table-row" style="grid-template-columns:' + cols + ';" onclick="openLeadModal(' + r.Id + ', true)">' +
+        '<div class="row-name">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' +
+        '<div class="row-dim">' + fmtDate(r.GeneratedDate) + '</div>' +
+        '<div onclick="event.stopPropagation()" style="display:flex;gap:8px;justify-content:flex-end;">' +
+        '<button class="btn-unclaim" style="color:var(--text-2);border-color:var(--border);" onclick="undoTBC(' + r.Id + ')">Undo TBC</button>' +
+        '<button class="btn-unclaim" style="color:var(--green);border-color:var(--green-bd);" onclick="claimLead(' + r.Id + ')">Claim</button></div></div>'
+      ).join('') + '</div>';
+  } else {
+    grid.style.display = '';
+    const keep = sessionRows; sessionRows = open;            // reuse card renderer against TBC data
+    grid.innerHTML = open.map(cardHTML).join('');
+    sessionRows = keep;
+  }
 }
 
 /* ---------------- lead modal + BT panel ---------------- */
-function openLeadModal(id) {
+function openLeadModal(id, withNotes) {
   const r = findRow(id);
   if (!r) return;
   document.getElementById('modal-title').textContent = r.Title;
+  document.querySelector('#modal-overlay .modal').classList.toggle('with-notes', !!withNotes);
   const count = parseInt(r.BTMatchCount || '0', 10) || 0;
-  document.getElementById('modal-body').innerHTML =
+  const detail =
     '<div class="card-loc">' + esc(r.Location || '') + (r.Sector ? ' &middot; ' + esc(r.Sector) : '') + '</div>' +
     '<div class="badge-row" style="margin-top:8px;">' + urlBadge(r) + btBadge(r) + '</div>' +
     '<div class="modal-section"><h4>Description</h4><div class="card-desc">' + esc(r.Description || '') + '</div></div>' +
@@ -1200,6 +1218,15 @@ function openLeadModal(id) {
     '</div></div>' +
     btInfo(r) +
     (count >= 1 ? '<div class="modal-section"><h4>BT customer records</h4><div id="bt-panel"><button class="btn-sm ghost" onclick="loadBTMatches(' + r.Id + ')">Load ' + (count > 1 ? 'all ' + count + ' matching records' : 'matching record') + '</button></div></div>' : '');
+  if (withNotes) {
+    document.getElementById('modal-body').innerHTML = '<div class="modal-grid"><div>' + detail + '</div>' +
+      '<aside class="notes-side"><div class="modal-section" style="margin-top:0;"><h4>Notes</h4>' +
+      '<textarea class="note-box" id="note-' + r.Id + '" style="min-height:260px;" placeholder="Add your notes about this lead...">' + esc(r.LeadNotes || '') + '</textarea>' +
+      '<button class="btn-sm" style="margin-top:10px;" onclick="saveNote(' + r.Id + ')">Save note</button>' +
+      '<div class="row-dim" style="margin-top:8px;font-size:11px;">Saved onto the lead record in SharePoint.</div></div></aside></div>';
+  } else {
+    document.getElementById('modal-body').innerHTML = detail;
+  }
   document.getElementById('modal-overlay').classList.add('open');
 }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
