@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPP Lead Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
+<style>
+  :root {
+    --navy:        #0d2545;
+    --navy-mid:    #1a3a6b;
+    --navy-light:  #234d8f;
+    --gold:        #c07b0a;
+    --gold-bright: #e09412;
+    --gold-pale:   #fef3dc;
+    --bg:          #edf0f7;
+    --card:        #ffffff;
+    --border:      #d8dde9;
+    --text-1:      #0d2545;
+    --text-2:      #3d5070;
+    --text-3:      #7a8aaa;
+    --green:       #145c2f;
+    --green-bg:    #e6f9ee;
+    --green-bd:    #86efac;
+    --amber:       #7c4c00;
+    --amber-bg:    #fff8e6;
+    --amber-bd:    #fcd34d;
+    --red:         #8b1a1a;
+    --red-bg:      #fef0f0;
+    --red-bd:      #fca5a5;
+    --blue:        #1a4fbd;
+    --blue-bg:     #eaf1ff;
+    --blue-bd:     #93c5fd;
+    --radius-sm:   8px;
+    --radius:      14px;
+    --radius-lg:   20px;
+    --shadow-sm:   0 1px 4px rgba(13,37,69,0.07);
+    --shadow:      0 3px 16px rgba(13,37,69,0.10);
+    --shadow-lg:   0 8px 32px rgba(13,37,69,0.14);
+    --transition:  0.18s ease;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Lexend', sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* ---- APP SHELL ---- */
+  .app-header {
+    background: var(--navy);
+    padding: 0 28px;
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .app-logo { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: var(--gold-bright);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800; font-size: 16px; color: var(--navy);
+  }
+  .app-title { font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+  .app-title span { color: var(--gold-bright); }
+
+  .header-nav { display: flex; align-items: center; gap: 4px; }
+  .nav-btn {
+    background: none; border: none; color: rgba(255,255,255,0.65);
+    font-family: 'Outfit', sans-serif; font-size: 13.5px; font-weight: 600;
+    padding: 8px 14px; border-radius: 8px; cursor: pointer; transition: var(--transition);
+  }
+  .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+  .nav-btn.active { color: var(--gold-bright); background: rgba(224,148,18,0.12); }
+
+  .header-user { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,0.7); font-size: 13.5px; }
+  .user-avatar {
+    width: 34px; height: 34px;
+    background: var(--navy-light);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 13px; color: #fff;
+  }
+  .btn-signout {
+    background: none; border: 1px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.75);
+    font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600;
+    padding: 6px 12px; border-radius: 7px; cursor: pointer; transition: var(--transition);
+  }
+  .btn-signout:hover { border-color: #fff; color: #fff; }
+
+  /* ---- SIGN IN ---- */
+  .signin-wrap { max-width: 420px; margin: 0 auto; padding: 110px 24px; text-align: center; }
+  .signin-logo { width: 64px; height: 64px; background: var(--gold-bright); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 26px; color: var(--navy); margin: 0 auto 24px; }
+  .signin-heading { font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 800; color: var(--navy); margin-bottom: 10px; }
+  .signin-sub { color: var(--text-2); font-size: 14.5px; font-weight: 300; margin-bottom: 36px; }
+  .signin-error { background: var(--red-bg); border: 1px solid var(--red-bd); color: var(--red); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; margin-top: 20px; display: none; text-align: left; }
+
+  /* ---- SCREENS ---- */
+  .screen { display: none; animation: fadeIn 0.22s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ---- HOME ---- */
+  .home-layout { max-width: 1080px; margin: 0 auto; padding: 44px 24px 40px; display: grid; grid-template-columns: 300px 1fr; gap: 36px; align-items: start; }
+  @media (max-width: 860px) { .home-layout { grid-template-columns: 1fr; } }
+
+  .recent-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .recent-head { padding: 14px 18px 10px; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); border-bottom: 1px solid var(--border); }
+  .recent-item { padding: 13px 18px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background var(--transition); }
+  .recent-item:hover { background: var(--gold-pale); }
+  .recent-item:last-child { border-bottom: none; }
+  .recent-crit { font-family: 'Outfit', sans-serif; font-size: 13.5px; font-weight: 600; color: var(--navy); line-height: 1.35; }
+  .recent-meta { font-size: 11.5px; color: var(--text-3); margin-top: 3px; }
+  .recent-empty { padding: 20px 18px; font-size: 13px; color: var(--text-3); font-weight: 300; }
+
+  .home-main { text-align: center; }
+  .home-eyebrow { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
+  .home-heading { font-family: 'Outfit', sans-serif; font-size: 34px; font-weight: 800; color: var(--navy); line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 12px; }
+  .home-sub { color: var(--text-2); font-size: 15.5px; font-weight: 300; margin-bottom: 40px; max-width: 420px; margin-left: auto; margin-right: auto; }
+  .home-buttons { display: flex; flex-direction: column; gap: 16px; max-width: 440px; margin: 0 auto 40px; }
+
+  .btn-primary {
+    display: flex; align-items: center; gap: 12px;
+    padding: 20px 28px; background: var(--navy); color: #fff;
+    border: none; border-radius: var(--radius);
+    font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 700;
+    cursor: pointer; transition: var(--transition); box-shadow: var(--shadow); width: 100%; text-align: left;
+  }
+  .btn-primary:hover { background: var(--navy-mid); box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+  .btn-primary .btn-icon { width: 42px; height: 42px; background: var(--gold-bright); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; }
+  .btn-primary .btn-text { flex: 1; }
+  .btn-primary .btn-label { display: block; font-size: 17px; }
+  .btn-primary .btn-desc  { display: block; font-size: 12.5px; font-weight: 400; opacity: 0.65; margin-top: 2px; }
+
+  .btn-secondary {
+    display: flex; align-items: center; gap: 12px;
+    padding: 20px 28px; background: var(--card); color: var(--navy);
+    border: 2px solid var(--border); border-radius: var(--radius);
+    font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 700;
+    cursor: pointer; transition: var(--transition); box-shadow: var(--shadow-sm); width: 100%; text-align: left;
+  }
+  .btn-secondary:hover { border-color: var(--navy); box-shadow: var(--shadow); transform: translateY(-1px); }
+  .btn-secondary .btn-icon { width: 42px; height: 42px; background: var(--bg); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; }
+  .btn-secondary .btn-text { flex: 1; }
+  .btn-secondary .btn-label { display: block; font-size: 17px; }
+  .btn-secondary .btn-desc  { display: block; font-size: 12.5px; font-weight: 400; opacity: 0.55; margin-top: 2px; }
+
+  .home-stats { display: flex; gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); max-width: 440px; margin: 0 auto; }
+  .stat-cell { flex: 1; background: var(--card); padding: 14px 16px; text-align: center; cursor: pointer; transition: background var(--transition); }
+  .stat-cell:hover { background: var(--gold-pale); }
+  .stat-num  { font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 800; color: var(--navy); display: block; }
+  .stat-lbl  { font-size: 11.5px; color: var(--text-3); font-weight: 400; margin-top: 2px; display: block; }
+
+  /* ---- FORMS ---- */
+  .form-wrap { max-width: 560px; margin: 0 auto; padding: 40px 24px; }
+  .screen-back {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 13.5px; color: var(--text-2); cursor: pointer;
+    margin-bottom: 28px; font-weight: 400; border: none; background: none; padding: 0;
+    transition: color var(--transition);
+  }
+  .screen-back:hover { color: var(--navy); }
+  .form-heading { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
+  .form-sub { color: var(--text-2); font-size: 14px; font-weight: 300; margin-bottom: 36px; }
+  .form-field { margin-bottom: 24px; }
+  .form-label { display: block; font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 8px; letter-spacing: 0.02em; text-transform: uppercase; }
+
+  .form-select, .form-input {
+    width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: var(--radius-sm);
+    font-family: 'Lexend', sans-serif; font-size: 15px; color: var(--text-1); background: var(--card);
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .form-select {
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 7L11 1' stroke='%230d2545' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; cursor: pointer;
+  }
+  .form-select:focus, .form-input:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(13,37,69,0.08); }
+
+  .form-submit {
+    width: 100%; padding: 16px 28px; background: var(--navy); color: #fff;
+    border: none; border-radius: var(--radius-sm);
+    font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: var(--transition); margin-top: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .form-submit:hover { background: var(--navy-mid); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .form-submit:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+  /* ---- LOADING ---- */
+  .loading-wrap { max-width: 480px; margin: 0 auto; padding: 80px 24px; text-align: center; }
+  .loading-spinner { width: 56px; height: 56px; border: 4px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 28px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-heading { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+  .loading-sub { color: var(--text-3); font-size: 13.5px; font-weight: 300; }
+  .loading-steps { list-style: none; margin-top: 28px; text-align: left; max-width: 340px; margin-left: auto; margin-right: auto; }
+  .loading-step { display: flex; align-items: center; gap: 10px; padding: 9px 0; font-size: 13.5px; color: var(--text-3); border-bottom: 1px solid var(--border); transition: color var(--transition); }
+  .loading-step:last-child { border-bottom: none; }
+  .loading-step .step-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .loading-step.active { color: var(--navy); font-weight: 500; }
+  .loading-step.active .step-dot { border-color: var(--gold-bright); background: var(--gold-pale); }
+  .loading-step.done { color: var(--green); }
+  .loading-step.done .step-dot { border-color: var(--green-bd); background: var(--green-bg); }
+  .loading-cancel { margin-top: 30px; }
+
+  /* ---- RESULTS ---- */
+  .results-wrap { max-width: 1080px; margin: 0 auto; padding: 32px 24px 60px; }
+  .results-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 8px; flex-wrap: wrap; }
+  .results-heading { font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 800; color: var(--navy); }
+  .results-sub { color: var(--text-2); font-size: 13.5px; font-weight: 300; margin-top: 2px; }
+  .results-actions { display: flex; gap: 10px; align-items: center; }
+  .btn-sm {
+    padding: 10px 18px; background: var(--navy); color: #fff; border: none; border-radius: var(--radius-sm);
+    font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition);
+  }
+  .btn-sm:hover { background: var(--navy-mid); }
+  .btn-sm.ghost { background: var(--card); color: var(--navy); border: 2px solid var(--border); }
+  .btn-sm.ghost:hover { border-color: var(--navy); }
+
+  .searching-banner {
+    display: none; align-items: center; gap: 10px; margin: 14px 0 0;
+    background: var(--blue-bg); border: 1px solid var(--blue-bd); color: var(--blue);
+    border-radius: var(--radius-sm); padding: 10px 16px; font-size: 13px;
+  }
+  .searching-banner .mini-spin { width: 16px; height: 16px; border: 2px solid var(--blue-bd); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 18px; margin-top: 22px; }
+
+  .lead-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-sm); padding: 20px; display: flex; flex-direction: column; gap: 10px;
+    transition: box-shadow var(--transition), opacity var(--transition);
+  }
+  .lead-card:hover { box-shadow: var(--shadow); }
+  .lead-card.is-claimed { outline: 2px solid var(--green-bd); }
+  .lead-card.is-rejected { opacity: 0.5; }
+
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .card-name { font-family: 'Outfit', sans-serif; font-size: 16.5px; font-weight: 700; color: var(--navy); line-height: 1.25; cursor: pointer; }
+  .card-name:hover { color: var(--navy-light); }
+  .card-conf { flex-shrink: 0; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 20px; background: var(--bg); color: var(--text-2); }
+  .card-conf.high { background: var(--green-bg); color: var(--green); }
+  .card-loc { font-size: 12.5px; color: var(--text-3); }
+  .card-desc { font-size: 13px; color: var(--text-2); font-weight: 300; line-height: 1.55; }
+  .card-hook { background: var(--gold-pale); border-left: 3px solid var(--gold-bright); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 10px 12px; font-size: 12.5px; color: var(--amber); line-height: 1.5; }
+  .card-url { font-size: 12.5px; color: var(--blue); text-decoration: none; word-break: break-all; }
+  .card-url:hover { text-decoration: underline; }
+
+  .badge-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .badge { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; border: 1px solid; display: inline-flex; align-items: center; gap: 5px; }
+  .badge.b-green { background: var(--green-bg); border-color: var(--green-bd); color: var(--green); }
+  .badge.b-amber { background: var(--amber-bg); border-color: var(--amber-bd); color: var(--amber); }
+  .badge.b-red   { background: var(--red-bg);   border-color: var(--red-bd);   color: var(--red); }
+  .badge.b-blue  { background: var(--blue-bg);  border-color: var(--blue-bd);  color: var(--blue); }
+  .badge.b-grey  { background: var(--bg); border-color: var(--border); color: var(--text-2); }
+  .badge.clickable { cursor: pointer; }
+  .badge.clickable:hover { box-shadow: var(--shadow-sm); }
+
+  .bt-info { font-size: 12px; color: var(--text-2); background: var(--bg); border-radius: var(--radius-sm); padding: 8px 11px; line-height: 1.5; }
+
+  .card-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .action-btn {
+    flex: 1; padding: 10px 0; border-radius: var(--radius-sm); border: none;
+    font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition);
+  }
+  .action-claim { background: var(--navy); color: #fff; }
+  .action-claim:hover { background: var(--navy-mid); }
+  .action-reject { background: var(--card); color: var(--red); border: 2px solid var(--red-bd); }
+  .action-reject:hover { background: var(--red-bg); }
+  .action-tbc { background: var(--card); color: var(--text-2); border: 2px solid var(--border); }
+  .action-tbc:hover { border-color: var(--navy); color: var(--navy); }
+  .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .emoji-row { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+  .emoji-lbl { font-size: 11px; color: var(--text-3); margin-right: 2px; }
+  .emoji-btn { background: none; border: 2px solid transparent; font-size: 17px; border-radius: 8px; cursor: pointer; padding: 2px 5px; transition: var(--transition); filter: grayscale(1); opacity: 0.55; }
+  .emoji-btn:hover { filter: none; opacity: 1; }
+  .emoji-btn.selected { filter: none; opacity: 1; border-color: var(--gold-bright); background: var(--gold-pale); }
+
+  .empty-state { text-align: center; padding: 70px 24px; color: var(--text-3); }
+  .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state .empty-msg { font-size: 15px; font-weight: 300; margin-bottom: 24px; }
+
+  /* ---- TABLE (Claimed / TBC) ---- */
+  .table-wrap { max-width: 1080px; margin: 0 auto; padding: 32px 24px 60px; }
+  .lead-table { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; margin-top: 22px; }
+  .table-head { display: grid; padding: 12px 18px; background: var(--bg); font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-3); border-bottom: 1px solid var(--border); }
+  .table-row { display: grid; padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 13.5px; align-items: center; cursor: pointer; transition: background var(--transition); }
+  .table-row:hover { background: var(--gold-pale); }
+  .table-row:last-child { border-bottom: none; }
+  .row-name { font-family: 'Outfit', sans-serif; font-weight: 600; color: var(--navy); }
+  .row-dim { color: var(--text-3); font-size: 12.5px; }
+  .btn-unclaim { padding: 7px 14px; background: var(--card); color: var(--red); border: 1.5px solid var(--red-bd); border-radius: 7px; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: var(--transition); }
+  .btn-unclaim:hover { background: var(--red-bg); }
+
+  /* ---- MODAL ---- */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(13,37,69,0.45); z-index: 200; align-items: flex-start; justify-content: center; padding: 50px 18px; overflow-y: auto; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--card); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); max-width: 660px; width: 100%; padding: 28px; animation: fadeIn 0.18s ease; }
+  .modal-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 4px; }
+  .modal-title { font-family: 'Outfit', sans-serif; font-size: 21px; font-weight: 800; color: var(--navy); }
+  .modal-close { background: var(--bg); border: none; width: 32px; height: 32px; border-radius: 8px; font-size: 14px; cursor: pointer; color: var(--text-2); flex-shrink: 0; }
+  .modal-close:hover { background: var(--border); }
+  .modal-section { margin-top: 18px; }
+  .modal-section h4 { font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+  .bt-match-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; align-items: center; }
+  .bt-match-row:last-child { border-bottom: none; }
+  .bt-match-table { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+  .bt-match-head { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; padding: 9px 12px; background: var(--bg); font-family: 'Outfit', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-3); }
+  .modal-loading { display: flex; align-items: center; gap: 10px; color: var(--text-3); font-size: 13px; padding: 14px 0; }
+  .modal-loading .mini-spin { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+  /* ---- TOAST ---- */
+  .toast {
+    position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--navy); color: #fff; padding: 13px 22px; border-radius: 12px;
+    font-family: 'Outfit', sans-serif; font-size: 13.5px; font-weight: 600;
+    box-shadow: var(--shadow-lg); z-index: 300; opacity: 0; transition: all 0.25s ease; pointer-events: none;
+    max-width: 90vw; text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.error { background: var(--red); }
+
+  .app-footer { text-align: center; padding: 18px; color: var(--text-3); font-size: 11.5px; font-weight: 300; }
+</style>
+</head>
+<body>
+
+<!-- ======== SIGN IN ======== -->
+<div class="screen active" id="screen-signin">
+  <div class="signin-wrap">
+    <div class="signin-logo">S</div>
+    <div class="signin-heading">SPP <span style="color:var(--gold);">Lead Generator</span></div>
+    <div class="signin-sub">Sign in with your SPP Microsoft account to continue.</div>
+    <button class="form-submit" style="max-width:300px;margin:0 auto;" id="btn-signin" onclick="signIn()">Sign in with Microsoft</button>
+    <div class="signin-error" id="signin-error"></div>
+  </div>
+</div>
+
+<!-- ======== APP (hidden until signed in) ======== -->
+<div id="app-shell" style="display:none;">
+
+  <header class="app-header">
+    <div class="app-logo" onclick="goHome()">
+      <div class="logo-mark">S</div>
+      <div class="app-title">SPP <span>Lead Generator</span></div>
+    </div>
+    <nav class="header-nav">
+      <button class="nav-btn" data-nav="screen-home" onclick="goHome()">Home</button>
+      <button class="nav-btn" data-nav="screen-claimed" onclick="openClaimed()">My Claimed</button>
+      <button class="nav-btn" data-nav="screen-tbc" onclick="openTBC()">Review Queue</button>
+    </nav>
+    <div class="header-user">
+      <span id="user-name"></span>
+      <div class="user-avatar" id="user-avatar"></div>
+      <button class="btn-signout" onclick="signOut()">Sign out</button>
+    </div>
+  </header>
+
+  <!-- ======== HOME ======== -->
+  <div class="screen" id="screen-home">
+    <div class="home-layout">
+      <aside class="recent-panel">
+        <div class="recent-head">Recent Searches</div>
+        <div id="recent-list"><div class="recent-empty">Loading...</div></div>
+      </aside>
+      <main class="home-main">
+        <div class="home-eyebrow">Specialised Panel Products</div>
+        <div class="home-heading">Find your next<br>trade customer</div>
+        <div class="home-sub">AI-assisted lead generation for plywood and panel products, checked against live BT customer data.</div>
+        <div class="home-buttons">
+          <button class="btn-primary" onclick="goTo('screen-generate')">
+            <span class="btn-icon">&#128269;</span>
+            <span class="btn-text"><span class="btn-label">Generate Leads</span><span class="btn-desc">Search by industry, product range and region</span></span>
+          </button>
+          <button class="btn-secondary" onclick="goTo('screen-similar')">
+            <span class="btn-icon">&#127970;</span>
+            <span class="btn-text"><span class="btn-label">Find Similar Companies</span><span class="btn-desc">Start from a company website you already rate</span></span>
+          </button>
+        </div>
+        <div class="home-stats">
+          <div class="stat-cell" onclick="openClaimed()"><span class="stat-num" id="stat-claimed">&ndash;</span><span class="stat-lbl">My claimed</span></div>
+          <div class="stat-cell" onclick="openTBC()"><span class="stat-num" id="stat-tbc">&ndash;</span><span class="stat-lbl">Awaiting review</span></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ======== GENERATE ======== -->
+  <div class="screen" id="screen-generate">
+    <div class="form-wrap">
+      <button class="screen-back" onclick="goHome()">&larr; Back</button>
+      <div class="form-heading">Generate Leads</div>
+      <div class="form-sub">Pick your criteria. The search takes around three minutes and verifies every company website before saving.</div>
+      <div class="form-field">
+        <label class="form-label">Industry / Sector</label>
+        <select class="form-select" id="gen-industry"></select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">SPP Product Range</label>
+        <select class="form-select" id="gen-product"></select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Region</label>
+        <select class="form-select" id="gen-region"></select>
+      </div>
+      <button class="form-submit" id="gen-submit" onclick="startGenerate()">Start Search</button>
+    </div>
+  </div>
+
+  <!-- ======== FIND SIMILAR ======== -->
+  <div class="screen" id="screen-similar">
+    <div class="form-wrap">
+      <button class="screen-back" onclick="goHome()">&larr; Back</button>
+      <div class="form-heading">Find Similar Companies</div>
+      <div class="form-sub">Give a reference company website and we will find UK companies with a similar profile.</div>
+      <div class="form-field">
+        <label class="form-label">Reference company website</label>
+        <input class="form-input" type="url" id="sim-url" placeholder="https://www.example.co.uk">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Keywords (comma separated)</label>
+        <input class="form-input" type="text" id="sim-keywords" placeholder="bespoke joinery, birch plywood">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Region</label>
+        <select class="form-select" id="sim-region"></select>
+      </div>
+      <button class="form-submit" id="sim-submit" onclick="startSimilar()">Find Similar</button>
+    </div>
+  </div>
+
+  <!-- ======== LOADING ======== -->
+  <div class="screen" id="screen-loading">
+    <div class="loading-wrap">
+      <div class="loading-spinner"></div>
+      <div class="loading-heading" id="loading-heading">Searching...</div>
+      <div class="loading-sub">This usually takes 2&ndash;4 minutes. Leads appear as soon as they are saved.</div>
+      <ul class="loading-steps">
+        <li class="loading-step" id="lstep-0"><span class="step-dot"></span> Reading customer and exclusion lists</li>
+        <li class="loading-step" id="lstep-1"><span class="step-dot"></span> Claude is searching the web</li>
+        <li class="loading-step" id="lstep-2"><span class="step-dot"></span> Verifying company websites</li>
+        <li class="loading-step" id="lstep-3"><span class="step-dot"></span> Saving and checking against BT customers</li>
+      </ul>
+      <div class="loading-cancel"><button class="btn-sm ghost" onclick="cancelWatch()">Hide &mdash; keep running in background</button></div>
+    </div>
+  </div>
+
+  <!-- ======== RESULTS ======== -->
+  <div class="screen" id="screen-results">
+    <div class="results-wrap">
+      <button class="screen-back" onclick="goHome()" style="margin-bottom:10px;">&larr; Back to Home</button>
+      <div class="results-head">
+        <div>
+          <div class="results-heading" id="results-heading">Results</div>
+          <div class="results-sub" id="results-sub"></div>
+        </div>
+        <div class="results-actions">
+          <button class="btn-sm ghost" onclick="refreshResults()">Refresh</button>
+          <button class="btn-sm" onclick="goTo('screen-generate')">New Search</button>
+        </div>
+      </div>
+      <div class="searching-banner" id="searching-banner"><span class="mini-spin"></span><span id="searching-msg">Search still running &mdash; new leads will appear automatically.</span></div>
+      <div class="card-grid" id="results-grid"></div>
+      <div class="empty-state" id="results-empty" style="display:none;">
+        <div class="empty-icon">&#128269;</div>
+        <div class="empty-msg" id="results-empty-msg">No leads in this session yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== MY CLAIMED ======== -->
+  <div class="screen" id="screen-claimed">
+    <div class="table-wrap">
+      <button class="screen-back" onclick="goHome()" style="margin-bottom:20px;">&larr; Back to Home</button>
+      <div class="results-head">
+        <div>
+          <div class="results-heading">My Claimed Leads</div>
+          <div class="results-sub" id="claimed-sub"></div>
+        </div>
+        <div class="results-actions">
+          <button class="btn-sm ghost" onclick="exportClaimedCSV()">Export CSV</button>
+          <button class="btn-sm ghost" onclick="openClaimed()">Refresh</button>
+        </div>
+      </div>
+      <div class="lead-table" id="claimed-table"></div>
+      <div class="empty-state" id="claimed-empty" style="display:none;">
+        <div class="empty-icon">&#128203;</div>
+        <div class="empty-msg">You have no claimed leads yet. Claim one from a search.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== TBC / REVIEW QUEUE ======== -->
+  <div class="screen" id="screen-tbc">
+    <div class="results-wrap">
+      <button class="screen-back" onclick="goHome()" style="margin-bottom:10px;">&larr; Back to Home</button>
+      <div class="results-head">
+        <div>
+          <div class="results-heading">Review Queue</div>
+          <div class="results-sub" id="tbc-sub">Leads nobody has actioned yet, newest first.</div>
+        </div>
+        <div class="results-actions">
+          <button class="btn-sm ghost" onclick="openTBC()">Refresh</button>
+        </div>
+      </div>
+      <div class="card-grid" id="tbc-grid"></div>
+      <div class="empty-state" id="tbc-empty" style="display:none;">
+        <div class="empty-icon">&#9989;</div>
+        <div class="empty-msg">Queue is clear &mdash; every lead has been actioned.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-footer">SPP Lead Generator &middot; web v1.0</div>
+</div>
+
+<!-- ======== LEAD MODAL ======== -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-top">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" onclick="closeModal()">&#10005;</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+/* =====================================================================
+   SPP Lead Generator - web v1.0
+   Backend: Azure Function proxy -> Power Automate flows -> SharePoint
+   ===================================================================== */
+
+const CONFIG = {
+  TENANT_ID: 'a043bfcb-213f-4b14-8ffa-4a8e6cf7d1c4',
+  CLIENT_ID: '7fa65e14-c68e-49dd-a7dd-3fc185890202',
+  REDIRECT_URI: 'https://spp-richard.github.io/spp-leads/',
+  SCOPE: 'api://7fa65e14-c68e-49dd-a7dd-3fc185890202/access_as_user',
+  PROXY: 'https://spp-leadgen-proxy-fbcagyawazafcthx.westeurope-01.azurewebsites.net/api/proxy',
+  POLL_MS: 10000,          // poll interval while a search runs
+  POLL_MAX_MS: 330000,     // give up watching after 5.5 minutes
+  STABLE_POLLS: 2          // result count unchanged this many polls = search finished
+};
+
+/* ---------------- state ---------------- */
+let msalInstance = null;
+let account = null;
+let ME = { email: '', name: '' };
+let userMap = {};            // lowercase email -> display name (from Dropdown_Options "UserDisplay" rows)
+let dropdowns = { Industry: [], ProductRange: [], Region: [] };
+let sessionRows = [];        // rows of the session currently shown on Results
+let currentSession = null;
+let currentSessionLabel = '';
+let watchTimer = null;
+let watchStart = 0;
+let watchLastCount = -1;
+let watchStableFor = 0;
+let claimedRows = [];
+let tbcRows = [];
+
+/* ---------------- utils ---------------- */
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return esc(iso);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function nowISO() { return new Date().toISOString(); }
+function displayName(v) {
+  if (!v) return '';
+  const key = String(v).toLowerCase().trim();
+  if (userMap[key]) return userMap[key];
+  if (key.includes('@')) {
+    const p = key.split('@')[0];
+    return p.charAt(0).toUpperCase() + p.slice(1);
+  }
+  return v;
+}
+function hostOf(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return url; }
+}
+function toast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.className = 'toast'; }, 3200);
+}
+
+/* ---------------- auth ---------------- */
+function initMsal() {
+  msalInstance = new msal.PublicClientApplication({
+    auth: {
+      clientId: CONFIG.CLIENT_ID,
+      authority: 'https://login.microsoftonline.com/' + CONFIG.TENANT_ID,
+      redirectUri: CONFIG.REDIRECT_URI
+    },
+    cache: { cacheLocation: 'localStorage' }
+  });
+  const accounts = msalInstance.getAllAccounts();
+  if (accounts.length > 0) { account = accounts[0]; onSignedIn(); }
+}
+async function signIn() {
+  const errBox = document.getElementById('signin-error');
+  errBox.style.display = 'none';
+  try {
+    const resp = await msalInstance.loginPopup({ scopes: ['User.Read'] });
+    account = resp.account;
+    onSignedIn();
+  } catch (e) {
+    errBox.textContent = 'Sign-in failed: ' + e.message;
+    errBox.style.display = 'block';
+  }
+}
+async function signOut() {
+  try { await msalInstance.logoutPopup({ account: account }); } catch (e) {}
+  location.reload();
+}
+async function getToken() {
+  try {
+    const r = await msalInstance.acquireTokenSilent({ account: account, scopes: [CONFIG.SCOPE] });
+    return r.accessToken;
+  } catch (e) {
+    const r = await msalInstance.acquireTokenPopup({ account: account, scopes: [CONFIG.SCOPE] });
+    return r.accessToken;
+  }
+}
+function onSignedIn() {
+  ME.email = account.username || '';
+  ME.name = account.name || ME.email;
+  document.getElementById('screen-signin').classList.remove('active');
+  document.getElementById('app-shell').style.display = 'block';
+  document.getElementById('user-name').textContent = ME.name;
+  document.getElementById('user-avatar').textContent = (ME.name || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+  bootApp();
+}
+
+/* ---------------- API ---------------- */
+async function api(target, payload) {
+  const token = await getToken();
+  const res = await fetch(CONFIG.PROXY, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ target: target, payload: payload || {} })
+  });
+  let data = null;
+  try { data = await res.json(); } catch (e) { data = null; }
+  if (!res.ok) throw new Error((data && (data.error || data.message)) || ('HTTP ' + res.status));
+  if (data && data.error) throw new Error(data.error);
+  return data;
+}
+const dataApi = (action, extra) => api('data', Object.assign({ action: action }, extra || {}));
+
+/* ---------------- boot ---------------- */
+async function bootApp() {
+  goTo('screen-home');
+  try {
+    const dd = await dataApi('getDropdowns');
+    const rows = (dd && dd.value) || [];
+    dropdowns = { Industry: [], ProductRange: [], Region: [] };
+    userMap = {};
+    rows.forEach(r => {
+      if (!r.Title || !r.OptionType) return;
+      if (r.OptionType === 'UserDisplay') {
+        const parts = r.Title.split('|');
+        if (parts.length === 2) userMap[parts[0].toLowerCase().trim()] = parts[1].trim();
+        return;
+      }
+      if (r.IsActive !== 'Yes') return;
+      if (dropdowns[r.OptionType]) dropdowns[r.OptionType].push(r);
+    });
+    Object.keys(dropdowns).forEach(k => dropdowns[k].sort((a, b) => (a.SortOrder || 0) - (b.SortOrder || 0)));
+    fillSelect('gen-industry', dropdowns.Industry);
+    fillSelect('gen-product', dropdowns.ProductRange);
+    fillSelect('gen-region', dropdowns.Region);
+    fillSelect('sim-region', dropdowns.Region);
+    restoreLastCriteria();
+    document.getElementById('user-name').textContent = displayName(ME.email);
+  } catch (e) {
+    toast('Could not load options: ' + e.message, true);
+  }
+  loadHome();
+}
+function fillSelect(id, rows) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = rows.map(r => '<option value="' + esc(r.Title) + '">' + esc(r.Title) + '</option>').join('');
+}
+function restoreLastCriteria() {
+  try {
+    const last = JSON.parse(localStorage.getItem('spp-last-criteria') || '{}');
+    ['gen-industry', 'gen-product', 'gen-region'].forEach(id => {
+      if (last[id]) { const el = document.getElementById(id); if ([...el.options].some(o => o.value === last[id])) el.value = last[id]; }
+    });
+  } catch (e) {}
+}
+
+/* ---------------- navigation ---------------- */
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.nav === id));
+  window.scrollTo(0, 0);
+}
+function goHome() { goTo('screen-home'); loadHome(); }
+
+/* ---------------- home: recent searches + stats ---------------- */
+async function loadHome() {
+  try {
+    const [recent, tbc, claimed] = await Promise.all([
+      dataApi('getRecentSearches'),
+      dataApi('getTBC'),
+      dataApi('getClaimed')
+    ]);
+    tbcRows = (tbc && tbc.value) || [];
+    claimedRows = (claimed && claimed.value) || [];
+    document.getElementById('stat-tbc').textContent = tbcRows.length;
+    document.getElementById('stat-claimed').textContent = claimedRows.length;
+    renderRecent((recent && recent.value) || []);
+  } catch (e) {
+    document.getElementById('recent-list').innerHTML = '<div class="recent-empty">Could not load: ' + esc(e.message) + '</div>';
+  }
+}
+function renderRecent(rows) {
+  const bySession = {};
+  rows.forEach(r => {
+    if (!r.SearchSession) return;
+    if (!bySession[r.SearchSession]) bySession[r.SearchSession] = { rows: [], maxId: 0 };
+    bySession[r.SearchSession].rows.push(r);
+    if (r.Id > bySession[r.SearchSession].maxId) bySession[r.SearchSession].maxId = r.Id;
+  });
+  const sessions = Object.entries(bySession).sort((a, b) => b[1].maxId - a[1].maxId).slice(0, 5);
+  const el = document.getElementById('recent-list');
+  if (sessions.length === 0) { el.innerHTML = '<div class="recent-empty">No searches yet. Your last five will appear here.</div>'; return; }
+  el.innerHTML = sessions.map(([sid, s]) => {
+    const f = s.rows[0];
+    let crit;
+    if (f.Industry && String(f.Industry).startsWith('http')) crit = 'Similar to ' + esc(hostOf(f.Industry));
+    else crit = esc(f.Industry || '?') + ' &middot; ' + esc(f.ProductRange || '?') + ' &middot; ' + esc(f.Region || '?');
+    const actioned = s.rows.filter(r => r.ClaimedBy || r.RejectedBy || r.TBCBy).length;
+    return '<div class="recent-item" onclick="openSession(\'' + encodeURIComponent(sid) + '\', this)">' +
+      '<div class="recent-crit">' + crit + '</div>' +
+      '<div class="recent-meta">' + s.rows.length + ' lead' + (s.rows.length === 1 ? '' : 's') + ' &middot; ' + actioned + ' actioned &middot; ' + fmtDate(f.GeneratedDate) + '</div></div>';
+  }).join('');
+}
+async function openSession(encodedSid, elOrLabel) {
+  const sid = decodeURIComponent(encodedSid);
+  currentSession = sid;
+  currentSessionLabel = '';
+  stopWatch();
+  goTo('screen-results');
+  document.getElementById('results-heading').textContent = 'Results';
+  document.getElementById('results-sub').textContent = 'Loading session...';
+  document.getElementById('results-grid').innerHTML = '';
+  document.getElementById('results-empty').style.display = 'none';
+  await refreshResults();
+}
+
+/* ---------------- search: generate / similar ---------------- */
+async function startGenerate() {
+  const industry = document.getElementById('gen-industry').value;
+  const product = document.getElementById('gen-product').value;
+  const region = document.getElementById('gen-region').value;
+  if (!industry || !product || !region) { toast('Pick all three criteria first.', true); return; }
+  localStorage.setItem('spp-last-criteria', JSON.stringify({ 'gen-industry': industry, 'gen-product': product, 'gen-region': region }));
+  const btn = document.getElementById('gen-submit');
+  btn.disabled = true; btn.textContent = 'Starting...';
+  try {
+    const r = await api('generate', { text: industry, text_1: product, text_2: region });
+    startWatch(r.sessionid, industry + ' / ' + product + ' / ' + region);
+  } catch (e) {
+    toast('Could not start search: ' + e.message, true);
+  }
+  btn.disabled = false; btn.textContent = 'Start Search';
+}
+async function startSimilar() {
+  const url = document.getElementById('sim-url').value.trim();
+  const kw = document.getElementById('sim-keywords').value.trim();
+  const region = document.getElementById('sim-region').value;
+  if (!url || !url.startsWith('http')) { toast('Enter the full website address including https://', true); return; }
+  const btn = document.getElementById('sim-submit');
+  btn.disabled = true; btn.textContent = 'Starting...';
+  try {
+    const r = await api('similar', { text: url, text_1: kw, text_2: region });
+    startWatch(r.sessionid, 'Similar to ' + hostOf(url));
+  } catch (e) {
+    toast('Could not start search: ' + e.message, true);
+  }
+  btn.disabled = false; btn.textContent = 'Find Similar';
+}
+
+/* ---------------- watch: poll the session until the flow finishes ---------------- */
+function startWatch(sessionId, label) {
+  currentSession = sessionId;
+  currentSessionLabel = label;
+  sessionRows = [];
+  watchStart = Date.now();
+  watchLastCount = -1;
+  watchStableFor = 0;
+  goTo('screen-loading');
+  document.getElementById('loading-heading').textContent = label;
+  updateLoadingSteps();
+  stopWatch();
+  watchTimer = setInterval(watchTick, CONFIG.POLL_MS);
+  setTimeout(watchTick, 4000);
+}
+function stopWatch() { if (watchTimer) { clearInterval(watchTimer); watchTimer = null; } }
+function cancelWatch() {
+  // Search keeps running server-side; the session stays reachable via Recent Searches.
+  stopWatch();
+  toast('Search continues in the background. Check Recent Searches in a few minutes.');
+  goHome();
+}
+function updateLoadingSteps() {
+  const sec = (Date.now() - watchStart) / 1000;
+  const stage = sec < 15 ? 0 : sec < 110 ? 1 : sec < 170 ? 2 : 3;
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('lstep-' + i);
+    el.className = 'loading-step' + (i < stage ? ' done' : i === stage ? ' active' : '');
+  }
+}
+async function watchTick() {
+  updateLoadingSteps();
+  const elapsed = Date.now() - watchStart;
+  let rows = [];
+  try {
+    const r = await dataApi('getLeads', { sessionId: currentSession });
+    rows = (r && r.value) || [];
+  } catch (e) { /* transient poll errors are fine; try again next tick */ }
+
+  if (rows.length > 0) {
+    sessionRows = rows;
+    if (document.getElementById('screen-loading').classList.contains('active')) {
+      goTo('screen-results');
+    }
+    renderResults();
+    if (rows.length === watchLastCount) {
+      watchStableFor++;
+      if (watchStableFor >= CONFIG.STABLE_POLLS) { finishWatch(true); return; }
+    } else {
+      watchStableFor = 0;
+    }
+    watchLastCount = rows.length;
+  }
+  if (elapsed > CONFIG.POLL_MAX_MS) finishWatch(rows.length > 0);
+}
+function finishWatch(found) {
+  stopWatch();
+  document.getElementById('searching-banner').style.display = 'none';
+  if (found) {
+    toast('Search complete - ' + sessionRows.length + ' lead' + (sessionRows.length === 1 ? '' : 's') + '.');
+    renderResults();
+  } else {
+    goTo('screen-results');
+    document.getElementById('results-heading').textContent = currentSessionLabel || 'Results';
+    document.getElementById('results-sub').textContent = '';
+    document.getElementById('results-empty').style.display = 'block';
+    document.getElementById('results-empty-msg').textContent = 'Nothing saved yet. The search may still be finishing - try Refresh in a minute, or it found no verifiable leads.';
+  }
+}
+
+/* ---------------- results rendering ---------------- */
+async function refreshResults() {
+  if (!currentSession) return;
+  try {
+    const r = await dataApi('getLeads', { sessionId: currentSession });
+    sessionRows = (r && r.value) || [];
+    renderResults();
+  } catch (e) { toast('Refresh failed: ' + e.message, true); }
+}
+function renderResults() {
+  const grid = document.getElementById('results-grid');
+  const f = sessionRows[0];
+  let label = currentSessionLabel;
+  if (!label && f) {
+    label = (f.Industry && String(f.Industry).startsWith('http')) ? ('Similar to ' + hostOf(f.Industry)) : [f.Industry, f.ProductRange, f.Region].filter(Boolean).join(' / ');
+  }
+  document.getElementById('results-heading').textContent = label || 'Results';
+  document.getElementById('results-sub').textContent = sessionRows.length + ' lead' + (sessionRows.length === 1 ? '' : 's') + (f ? ' - generated ' + fmtDate(f.GeneratedDate) + ' by ' + displayName(f.GeneratedBy) : '');
+  document.getElementById('searching-banner').style.display = watchTimer ? 'flex' : 'none';
+  document.getElementById('results-empty').style.display = sessionRows.length === 0 ? 'block' : 'none';
+  grid.innerHTML = sessionRows.slice().sort((a, b) => a.Id - b.Id).map(cardHTML).join('');
+}
+
+function statusOf(r) {
+  if (r.RejectedBy) return 'rejected';
+  if (r.ClaimedBy) return 'claimed';
+  if (r.TBCBy) return 'tbc';
+  return 'open';
+}
+function btBadge(r) {
+  const count = parseInt(r.BTMatchCount || '0', 10) || 0;
+  const problem = r.BTProblemCustomer === true || r.BTProblemCustomer === 'true' || r.BTProblemCustomer === '1';
+  let h = '';
+  if (count > 1) {
+    h += '<span class="badge b-amber clickable" onclick="openBTPanel(' + r.Id + ')" title="Click to view all matching BT records">' + count + ' possible BT matches</span>';
+  } else if (r.BTMatch === 'Confirmed') {
+    h += '<span class="badge b-green">BT customer</span>';
+  } else if (r.BTMatch && r.BTMatch !== 'None' && r.BTMatch !== '') {
+    h += '<span class="badge b-amber">Possible BT match</span>';
+  } else {
+    h += '<span class="badge b-grey">New prospect</span>';
+  }
+  if (problem) h += '<span class="badge b-red">Problem customer flag</span>';
+  return h;
+}
+function urlBadge(r) {
+  if (r.URLStatus === 'uncertain') return '<span class="badge b-amber" title="The site did not answer our automatic check - open it yourself before contacting">Website unverified - check</span>';
+  if (r.URLStatus === 'live' || !r.URLStatus) return '<span class="badge b-green">Website verified</span>';
+  return '<span class="badge b-red">Website dead</span>';
+}
+function btInfo(r) {
+  if (!r.BTMatch || r.BTMatch === 'None') return '';
+  const bits = [];
+  if (r.BTStatus) bits.push('Status: <strong>' + esc(r.BTStatus) + '</strong>');
+  if (r.BTRep) bits.push('Rep: <strong>' + esc(displayName(r.BTRep)) + '</strong>');
+  if (r.BTLastNote) bits.push('Last note: ' + esc(r.BTLastNote));
+  if (r.BTNotepadCount) bits.push(esc(String(r.BTNotepadCount)) + ' notes');
+  if (bits.length === 0) return '';
+  const caveat = (parseInt(r.BTMatchCount || '0', 10) > 1) ? ' <em>(first of several matches - click the badge to compare)</em>' : '';
+  return '<div class="bt-info">' + bits.join(' &middot; ') + caveat + '</div>';
+}
+function qualityRow(r) {
+  const q = r.QualityRating || '';
+  return '<div class="emoji-row"><span class="emoji-lbl">Lead quality:</span>' +
+    '<button class="emoji-btn' + (q === 'Poor' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Poor\')" title="Poor lead">&#128542;</button>' +
+    '<button class="emoji-btn' + (q === 'Neutral' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Neutral\')" title="Neutral">&#128528;</button>' +
+    '<button class="emoji-btn' + (q === 'Good' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Good\')" title="Good lead">&#128522;</button></div>';
+}
+function cardHTML(r) {
+  const st = statusOf(r);
+  let stateBadge = '';
+  if (st === 'claimed') stateBadge = '<span class="badge b-green">Claimed by ' + esc(displayName(r.ClaimedBy)) + '</span>';
+  if (st === 'rejected') stateBadge = '<span class="badge b-red">Rejected</span>';
+  if (st === 'tbc') stateBadge = '<span class="badge b-blue">Marked TBC by ' + esc(displayName(r.TBCBy)) + '</span>';
+  const actions = st === 'open'
+    ? '<div class="card-actions">' +
+      '<button class="action-btn action-reject" onclick="rejectLead(' + r.Id + ')">No Opportunity</button>' +
+      '<button class="action-btn action-tbc" onclick="tbcLead(' + r.Id + ')">TBC</button>' +
+      '<button class="action-btn action-claim" onclick="claimLead(' + r.Id + ')">Claim</button></div>'
+    : (st === 'claimed' && String(r.ClaimedBy).toLowerCase() === ME.email.toLowerCase()
+      ? '<div class="card-actions"><button class="action-btn action-reject" onclick="unclaimLead(' + r.Id + ')">Unclaim</button></div>' : '');
+  return '<div class="lead-card' + (st === 'claimed' ? ' is-claimed' : st === 'rejected' ? ' is-rejected' : '') + '" id="lead-' + r.Id + '">' +
+    '<div class="card-top"><div class="card-name" onclick="openLeadModal(' + r.Id + ')">' + esc(r.Title) + '</div></div>' +
+    '<div class="card-loc">' + esc(r.Location || '') + (r.Sector ? ' &middot; ' + esc(r.Sector) : '') + '</div>' +
+    '<div class="badge-row">' + urlBadge(r) + btBadge(r) + stateBadge + '</div>' +
+    btInfo(r) +
+    '<div class="card-desc">' + esc(r.Description || '') + '</div>' +
+    (r.SPPProductHook ? '<div class="card-hook">' + esc(r.SPPProductHook) + '</div>' : '') +
+    (r.WebsiteURL ? '<a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">&#128279; ' + esc(hostOf(r.WebsiteURL)) + '</a>' : '') +
+    actions + qualityRow(r) + '</div>';
+}
+
+/* ---------------- lead actions ---------------- */
+function findRow(id) {
+  return sessionRows.find(r => r.Id === id) || tbcRows.find(r => r.Id === id) || claimedRows.find(r => r.Id === id);
+}
+async function updateLead(id, fields, okMsg) {
+  try {
+    await dataApi('update', { itemId: String(id), fields: fields });
+    const row = findRow(id);
+    if (row) Object.assign(row, fields);
+    renderResults();
+    if (document.getElementById('screen-tbc').classList.contains('active')) renderTBC();
+    if (document.getElementById('screen-claimed').classList.contains('active')) renderClaimed();
+    if (okMsg) toast(okMsg);
+  } catch (e) {
+    toast('Update failed: ' + e.message, true);
+  }
+}
+function claimLead(id) { updateLead(id, { ClaimedBy: ME.email, ClaimedDate: nowISO() }, 'Lead claimed - it is yours.'); }
+function unclaimLead(id) { updateLead(id, { ClaimedBy: null, ClaimedDate: null }, 'Lead released back to the pool.'); }
+function rejectLead(id) { updateLead(id, { RejectedBy: ME.email, RejectedDate: nowISO() }, 'Rejected - the company joins the exclusion list.'); }
+function tbcLead(id) { updateLead(id, { TBCBy: ME.email }, 'Marked TBC.'); }
+function setQuality(id, rating) { updateLead(id, { QualityRating: rating }, 'Quality feedback saved - future searches learn from this.'); }
+
+/* ---------------- claimed screen ---------------- */
+async function openClaimed() {
+  goTo('screen-claimed');
+  document.getElementById('claimed-sub').textContent = 'Loading...';
+  try {
+    const r = await dataApi('getClaimed');
+    claimedRows = (r && r.value) || [];
+    renderClaimed();
+  } catch (e) { toast('Could not load claimed leads: ' + e.message, true); }
+}
+function renderClaimed() {
+  const mine = claimedRows;
+  document.getElementById('claimed-sub').textContent = mine.length + ' lead' + (mine.length === 1 ? '' : 's') + ' claimed by ' + displayName(ME.email);
+  document.getElementById('claimed-empty').style.display = mine.length ? 'none' : 'block';
+  const cols = '2.2fr 1.6fr 1fr 1fr 0.8fr 0.9fr';
+  const head = '<div class="table-head" style="grid-template-columns:' + cols + ';"><div>Company</div><div>Sector</div><div>Region</div><div>Claimed</div><div>Quality</div><div></div></div>';
+  document.getElementById('claimed-table').style.display = mine.length ? 'block' : 'none';
+  document.getElementById('claimed-table').innerHTML = head + mine.map(r =>
+    '<div class="table-row" style="grid-template-columns:' + cols + ';" onclick="openLeadModal(' + r.Id + ')">' +
+    '<div class="row-name">' + esc(r.Title) + '</div>' +
+    '<div class="row-dim">' + esc(r.Sector || '') + '</div>' +
+    '<div class="row-dim">' + esc(r.Region || '') + '</div>' +
+    '<div class="row-dim">' + fmtDate(r.ClaimedDate) + '</div>' +
+    '<div class="row-dim">' + esc(r.QualityRating || '-') + '</div>' +
+    '<div onclick="event.stopPropagation()"><button class="btn-unclaim" onclick="unclaimLead(' + r.Id + ')">Unclaim</button></div></div>'
+  ).join('');
+}
+function exportClaimedCSV() {
+  if (!claimedRows.length) { toast('Nothing to export.', true); return; }
+  const cols = ['Title', 'Location', 'Sector', 'WebsiteURL', 'EmailDomain', 'ContactName', 'ContactRole', 'Industry', 'ProductRange', 'Region', 'ClaimedDate', 'QualityRating', 'SPPProductHook'];
+  const escCSV = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const csv = [cols.join(',')].concat(claimedRows.map(r => cols.map(c => escCSV(r[c])).join(','))).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'spp-claimed-leads.csv';
+  a.click();
+}
+
+/* ---------------- TBC screen ---------------- */
+async function openTBC() {
+  goTo('screen-tbc');
+  document.getElementById('tbc-grid').innerHTML = '';
+  try {
+    const r = await dataApi('getTBC');
+    tbcRows = (r && r.value) || [];
+    renderTBC();
+  } catch (e) { toast('Could not load the queue: ' + e.message, true); }
+}
+function renderTBC() {
+  const open = tbcRows.filter(r => statusOf(r) === 'open');
+  document.getElementById('tbc-sub').textContent = open.length + ' unactioned lead' + (open.length === 1 ? '' : 's') + ', newest first.';
+  document.getElementById('tbc-empty').style.display = open.length ? 'none' : 'block';
+  const grid = document.getElementById('tbc-grid');
+  const keep = sessionRows; sessionRows = open;            // reuse card renderer against TBC data
+  grid.innerHTML = open.map(cardHTML).join('');
+  sessionRows = keep;
+}
+
+/* ---------------- lead modal + BT panel ---------------- */
+function openLeadModal(id) {
+  const r = findRow(id);
+  if (!r) return;
+  document.getElementById('modal-title').textContent = r.Title;
+  const count = parseInt(r.BTMatchCount || '0', 10) || 0;
+  document.getElementById('modal-body').innerHTML =
+    '<div class="card-loc">' + esc(r.Location || '') + (r.Sector ? ' &middot; ' + esc(r.Sector) : '') + '</div>' +
+    '<div class="badge-row" style="margin-top:8px;">' + urlBadge(r) + btBadge(r) + '</div>' +
+    '<div class="modal-section"><h4>Description</h4><div class="card-desc">' + esc(r.Description || '') + '</div></div>' +
+    (r.SPPProductHook ? '<div class="modal-section"><h4>SPP angle</h4><div class="card-hook">' + esc(r.SPPProductHook) + '</div></div>' : '') +
+    '<div class="modal-section"><h4>Details</h4><div class="bt-info">' +
+    (r.WebsiteURL ? 'Website: <a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">' + esc(r.WebsiteURL) + '</a><br>' : '') +
+    (r.EmailDomain ? 'Email domain: ' + esc(r.EmailDomain) + '<br>' : '') +
+    (r.ContactName ? 'Contact: ' + esc(r.ContactName) + (r.ContactRole ? ' (' + esc(r.ContactRole) + ')' : '') + '<br>' : '') +
+    'Generated ' + fmtDate(r.GeneratedDate) + ' by ' + esc(displayName(r.GeneratedBy)) +
+    (r.ClaimedBy ? '<br>Claimed by ' + esc(displayName(r.ClaimedBy)) + ' on ' + fmtDate(r.ClaimedDate) : '') +
+    '</div></div>' +
+    btInfo(r) +
+    (count >= 1 ? '<div class="modal-section"><h4>BT customer records</h4><div id="bt-panel"><button class="btn-sm ghost" onclick="loadBTMatches(' + r.Id + ')">Load ' + (count > 1 ? 'all ' + count + ' matching records' : 'matching record') + '</button></div></div>' : '');
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function openBTPanel(id) { openLeadModal(id); loadBTMatches(id); }
+async function loadBTMatches(id) {
+  const r = findRow(id);
+  if (!r) return;
+  const panel = document.getElementById('bt-panel');
+  panel.innerHTML = '<div class="modal-loading"><span class="mini-spin"></span> Searching 6,000 BT customer records - takes 10-20 seconds...</div>';
+  const cleaned = String(r.Title || '').toLowerCase().replace(/\bthe \b/g, '').replace(/ limited| ltd\.?| plc| & sons/g, '').trim();
+  try {
+    const resp = await dataApi('searchBT', { domain: r.EmailDomain || '', name: cleaned.length >= 6 ? cleaned.substring(0, 8) : 'zzz-skip' });
+    const rows = (resp && resp.value) || [];
+    if (!rows.length) { panel.innerHTML = '<div class="card-desc">No matching BT records found.</div>'; return; }
+    panel.innerHTML = '<div class="bt-match-table"><div class="bt-match-head"><div>Customer</div><div>Rep</div><div>Status</div><div>Last note</div></div>' +
+      rows.map(m => '<div class="bt-match-row"><div class="row-name">' + esc(m.Title) + '</div><div>' + esc(displayName(m.SalesRep || '')) + '</div><div>' + esc(m.CustomerStatus || '-') + '</div><div class="row-dim">' + esc(m.LastNoteDate || '-') + '</div></div>').join('') + '</div>';
+  } catch (e) {
+    panel.innerHTML = '<div class="card-desc">Could not load BT records: ' + esc(e.message) + '</div>';
+  }
+}
+
+/* ---------------- start ---------------- */
+initMsal();
+</script>
+</body>
+</html>
