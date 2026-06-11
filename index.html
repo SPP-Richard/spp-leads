@@ -1097,8 +1097,16 @@ async function rejectLead(id) {
   const row = findRow(id); if (row) row.__gone = true;
   updateLead(id, { RejectedBy: ME.email, RejectedDate: nowISO(), RejectReason: String(reason) }, 'Rejected - the company joins the exclusion list.');
 }
-function undoReject(id) {
-  updateLead(id, { RejectedBy: null, RejectedDate: null, RejectReason: null }, 'Rejection undone. Note: the company stays on the exclusion list until removed there.');
+async function undoReject(id) {
+  const r = findRow(id);
+  await updateLead(id, { RejectedBy: null, RejectedDate: null, RejectReason: null }, null);
+  if (!r) return;
+  try {
+    const res = await dataApi('removeExclusion', { name: r.Title });
+    toast(res && res.removed ? 'Rejection undone - removed from the exclusion list.' : 'Rejection undone. (No exclusion entry found.)');
+  } catch (e) {
+    toast('Rejection undone, but exclusion removal failed: ' + e.message, true);
+  }
 }
 function tbcLead(id) { updateLead(id, { TBCBy: ME.email }, 'Marked TBC.'); }
 function undoTBC(id) { updateLead(id, { TBCBy: null }, 'TBC removed - back to open.'); }
