@@ -1250,7 +1250,7 @@ function renderClaimed() {
   document.getElementById('claimed-table').style.display = mine.length ? 'block' : 'none';
   document.getElementById('claimed-table').innerHTML = head + mine.map(r =>
     '<div class="table-row' + (r.__gone || !r.ClaimedBy || r.RejectedBy ? ' is-gone' : '') + '" style="grid-template-columns:' + cols + ';" onclick="openLeadModal(' + r.Id + ', true)">' +
-    '<div onclick="event.stopPropagation()"><div class="row-name" style="cursor:pointer;" onclick="openLeadModal(' + r.Id + ', true)">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' + detailBits(r, 'claimed') + '</div>' +
+    '<div class="row-name">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' +
     '<div class="row-dim">' + fmtDate(r.ClaimedDate) + '</div>' +
     '<div onclick="event.stopPropagation()" style="display:flex;gap:8px;justify-content:flex-end;">' +
     '<button class="btn-unclaim" onclick="unclaimLead(' + r.Id + ')">Unclaim</button>' +
@@ -1383,11 +1383,14 @@ function openLeadModal(id, withNotes) {
   document.getElementById('modal-title').textContent = r.Title;
   document.querySelector('#modal-overlay .modal').classList.toggle('with-notes', !!withNotes);
   const count = parseInt(r.BTMatchCount || '0', 10) || 0;
+  const pg = document.getElementById('screen-claimed').classList.contains('active') ? 'claimed'
+    : (document.getElementById('screen-tbc').classList.contains('active') ? 'tbc' : 'results');
+  const openAttr = cardDetailsOpen(pg) ? ' open' : '';
   const descSec = r.Description ? (withNotes
-    ? '<details class="collapse"><summary>Description</summary><div class="card-desc" style="padding-bottom:10px;">' + esc(r.Description) + '</div></details>'
+    ? '<details class="collapse"' + openAttr + '><summary>Description</summary><div class="card-desc" style="padding-bottom:10px;">' + esc(r.Description) + '</div></details>'
     : '<div class="modal-section"><h4>Description</h4><div class="card-desc">' + esc(r.Description) + '</div></div>') : '';
   const hookSec = r.SPPProductHook ? (withNotes
-    ? '<details class="collapse"><summary>SPP angle</summary><div class="card-hook" style="margin-bottom:10px;">' + esc(r.SPPProductHook) + '</div></details>'
+    ? '<details class="collapse"' + openAttr + '><summary>SPP angle</summary><div class="card-hook" style="margin-bottom:10px;">' + esc(r.SPPProductHook) + '</div></details>'
     : '<div class="modal-section"><h4>SPP angle</h4><div class="card-hook">' + esc(r.SPPProductHook) + '</div></div>') : '';
   const detail =
     '<div class="card-loc">' + esc(r.Location || '') + (r.Sector ? ' &middot; ' + esc(r.Sector) : '') + '</div>' +
