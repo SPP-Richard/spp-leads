@@ -311,11 +311,11 @@
   }
   .note-box:focus { outline: none; border-color: var(--navy); }
   .note-save { margin-top: 6px; padding: 6px 12px; font-size: 11.5px; }
-  .modal.with-notes { max-width: 1060px; }
-  .modal-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 26px; align-items: start; }
+  .modal.with-notes { max-width: 1280px; }
+  .modal-grid { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 26px; align-items: start; }
   @media (max-width: 760px) { .modal-grid { grid-template-columns: 1fr; } }
   .notes-side { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; position: sticky; top: 0; }
-  .note-history { max-height: 360px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; padding-right: 4px; }
+  .note-history { max-height: calc(100vh - 290px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
   .note-entry { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; }
   .note-entry-head { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: var(--gold); margin-bottom: 3px; }
   .note-entry-body { font-size: 12.5px; color: var(--text-1); white-space: pre-wrap; line-height: 1.5; }
@@ -1299,13 +1299,13 @@ function openLeadModal(id, withNotes) {
     btInfo(r) +
     (count >= 1 ? '<div class="modal-section"><h4>BT customer records</h4><div id="bt-panel"><button class="btn-sm ghost" onclick="loadBTMatches(' + r.Id + ')">Load ' + (count > 1 ? 'all ' + count + ' matching records' : 'matching record') + '</button></div></div>' : '');
   if (withNotes) {
-    document.getElementById('modal-body').innerHTML = '<div class="modal-grid"><div>' + detail + '</div>' +
+    document.getElementById('modal-body').innerHTML = '<div class="modal-grid"><div>' + detail +
+      '<div class="modal-section"><h4>Add a note</h4>' +
+      '<textarea class="note-box" id="note-' + r.Id + '" style="min-height:90px;" placeholder="Type a new note..."></textarea>' +
+      '<div style="display:flex;gap:10px;margin-top:10px;align-items:center;"><button class="btn-sm" onclick="saveNote(' + r.Id + ')">Save note</button>' +
+      '<span class="row-dim" style="font-size:11px;">Time-stamped automatically on save.</span></div></div></div>' +
       '<aside class="notes-side"><div class="modal-section" style="margin-top:0;"><h4>Notes</h4>' +
-      '<div class="note-history" id="note-hist-' + r.Id + '">' + noteHistoryHTML(r.LeadNotes) + '</div>' +
-      '<textarea class="note-box" id="note-' + r.Id + '" style="min-height:110px;" placeholder="Type a new note..." onkeydown="if(event.ctrlKey && event.key === \';\'){event.preventDefault();insertStamp(' + r.Id + ');}"></textarea>' +
-      '<div style="display:flex;gap:8px;margin-top:10px;"><button class="btn-sm" onclick="saveNote(' + r.Id + ')">Save note</button>' +
-      '<button class="btn-sm ghost" onclick="insertStamp(' + r.Id + ')" title="Or press Ctrl+; in the notes box">+ Time stamp</button></div>' +
-      '<div class="row-dim" style="margin-top:8px;font-size:11px;">Each save adds a separate stamped note above.</div></div></aside></div>';
+      '<div class="note-history" id="note-hist-' + r.Id + '">' + noteHistoryHTML(r.LeadNotes) + '</div></div></aside></div>';
   } else {
     document.getElementById('modal-body').innerHTML = detail;
   }
