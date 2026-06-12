@@ -126,6 +126,7 @@
   .recent-item { padding: 13px 18px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background var(--transition); }
   .recent-item:hover { background: var(--gold-pale); }
   .recent-item:last-child { border-bottom: none; }
+  #recent-list { max-height: calc(100vh - 230px); overflow-y: auto; }
   .recent-crit { font-family: 'Outfit', sans-serif; font-size: 13.5px; font-weight: 600; color: var(--navy); line-height: 1.35; }
   .recent-meta { font-size: 11.5px; color: var(--text-3); margin-top: 3px; }
   .recent-empty { padding: 20px 18px; font-size: 13px; color: var(--text-3); font-weight: 300; }
@@ -396,7 +397,8 @@
     <nav class="header-nav">
       <button class="nav-btn" data-nav="screen-home" onclick="goHome()">Home</button>
       <button class="nav-btn" data-nav="screen-claimed" onclick="openClaimed()">My Claimed</button>
-      <button class="nav-btn" data-nav="screen-tbc" onclick="openTBC()">Review Queue</button>
+      <button class="nav-btn" data-nav="screen-tbc" onclick="openTBC('mine')">My TBC Leads</button>
+      <button class="nav-btn" data-nav="screen-prevsearch" onclick="openPrevSearches()">Previous Searches</button>
     </nav>
     <div class="header-user">
       <span id="user-name"></span>
@@ -560,6 +562,27 @@
       <div class="empty-state" id="tbc-empty" style="display:none;">
         <div class="empty-icon">&#9989;</div>
         <div class="empty-msg">Queue is clear &mdash; every lead has been actioned.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== PREVIOUS SEARCHES ======== -->
+  <div class="screen" id="screen-prevsearch">
+    <div class="table-wrap">
+      <button class="screen-back" onclick="goHome()" style="margin-bottom:20px;">&larr; Back to Home</button>
+      <div class="results-head">
+        <div>
+          <div class="results-heading">Previous Searches</div>
+          <div class="results-sub" id="prev-sub"></div>
+        </div>
+        <div class="results-actions">
+          <button class="btn-sm ghost" onclick="openPrevSearches()">Refresh</button>
+        </div>
+      </div>
+      <div class="lead-table" id="prev-table"></div>
+      <div class="empty-state" id="prev-empty" style="display:none;">
+        <div class="empty-icon">&#128269;</div>
+        <div class="empty-msg">No searches yet &mdash; your completed searches will appear here.</div>
       </div>
     </div>
   </div>
@@ -794,7 +817,7 @@ async function loadHome() {
     document.getElementById('recent-list').innerHTML = '<div class="recent-empty">Could not load: ' + esc(e.message) + '</div>';
   }
 }
-function renderRecent(rows) {
+function groupSessions(rows) {
   const bySession = {};
   rows.forEach(r => {
     if (!r.SearchSession) return;
@@ -802,19 +825,46 @@ function renderRecent(rows) {
     bySession[r.SearchSession].rows.push(r);
     if (r.Id > bySession[r.SearchSession].maxId) bySession[r.SearchSession].maxId = r.Id;
   });
-  const sessions = Object.entries(bySession).sort((a, b) => b[1].maxId - a[1].maxId).slice(0, 5);
+  return Object.entries(bySession).sort((a, b) => b[1].maxId - a[1].maxId);
+}
+function sessionLabel(f) {
+  if (f.Industry && String(f.Industry).startsWith('http')) return 'Similar to ' + esc(hostOf(f.Industry));
+  return esc(f.Industry || '?') + ' &middot; ' + esc(f.ProductRange || '?') + ' &middot; ' + esc(f.Region || '?');
+}
+function renderRecent(rows) {
+  const sessions = groupSessions(rows).slice(0, 12);
   const el = document.getElementById('recent-list');
-  if (sessions.length === 0) { el.innerHTML = '<div class="recent-empty">No searches yet. Your last five will appear here.</div>'; return; }
+  if (sessions.length === 0) { el.innerHTML = '<div class="recent-empty">No searches yet. Your searches will appear here.</div>'; return; }
   el.innerHTML = sessions.map(([sid, s]) => {
     const f = s.rows[0];
-    let crit;
-    if (f.Industry && String(f.Industry).startsWith('http')) crit = 'Similar to ' + esc(hostOf(f.Industry));
-    else crit = esc(f.Industry || '?') + ' &middot; ' + esc(f.ProductRange || '?') + ' &middot; ' + esc(f.Region || '?');
     const actioned = s.rows.filter(r => r.ClaimedBy || r.RejectedBy || r.TBCBy).length;
     return '<div class="recent-item" onclick="openSession(\'' + encodeURIComponent(sid) + '\', this)">' +
-      '<div class="recent-crit">' + crit + '</div>' +
+      '<div class="recent-crit">' + sessionLabel(f) + '</div>' +
       '<div class="recent-meta">' + s.rows.length + ' lead' + (s.rows.length === 1 ? '' : 's') + ' &middot; ' + actioned + ' actioned &middot; ' + fmtDate(f.GeneratedDate) + '</div></div>';
   }).join('');
+}
+async function openPrevSearches() {
+  goTo('screen-prevsearch');
+  document.getElementById('prev-sub').textContent = 'Loading...';
+  try {
+    const r = await dataApi('getRecentSearches');
+    const sessions = groupSessions((r && r.value) || []);
+    document.getElementById('prev-sub').textContent = sessions.length + ' search' + (sessions.length === 1 ? '' : 'es') + ' by ' + displayName(ME.email) + ', newest first.';
+    document.getElementById('prev-empty').style.display = sessions.length ? 'none' : 'block';
+    document.getElementById('prev-table').style.display = sessions.length ? 'block' : 'none';
+    const cols = '2.6fr 1fr 0.8fr 0.8fr';
+    document.getElementById('prev-table').innerHTML =
+      '<div class="table-head" style="grid-template-columns:' + cols + ';"><div>Search</div><div>Date</div><div>Leads</div><div>Actioned</div></div>' +
+      sessions.map(([sid, s]) => {
+        const f = s.rows[0];
+        const actioned = s.rows.filter(x => x.ClaimedBy || x.RejectedBy || x.TBCBy).length;
+        return '<div class="table-row" style="grid-template-columns:' + cols + ';" onclick="openSession(\'' + encodeURIComponent(sid) + '\')">' +
+          '<div class="row-name">' + sessionLabel(f) + '</div>' +
+          '<div class="row-dim">' + fmtDate(f.GeneratedDate) + '</div>' +
+          '<div class="row-dim">' + s.rows.length + '</div>' +
+          '<div class="row-dim">' + actioned + '</div></div>';
+      }).join('');
+  } catch (e) { toast('Could not load searches: ' + e.message, true); }
 }
 async function openSession(encodedSid, elOrLabel) {
   const sid = decodeURIComponent(encodedSid);
@@ -1355,6 +1405,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.getElementById('modal-overlay').classList.contains('open')) return;
   if (document.getElementById('screen-tbc').classList.contains('active')) openTBC(tbcMode);
   else if (document.getElementById('screen-claimed').classList.contains('active')) openClaimed();
+  else if (document.getElementById('screen-prevsearch').classList.contains('active')) openPrevSearches();
   else if (document.getElementById('screen-home').classList.contains('active')) loadHome();
   else if (document.getElementById('screen-results').classList.contains('active') && !watchTimer) refreshResults();
 });
