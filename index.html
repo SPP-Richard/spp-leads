@@ -311,10 +311,19 @@
   }
   .note-box:focus { outline: none; border-color: var(--navy); }
   .note-save { margin-top: 6px; padding: 6px 12px; font-size: 11.5px; }
-  .modal.with-notes { max-width: 980px; }
-  .modal-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 26px; align-items: start; }
+  .modal.with-notes { max-width: 1060px; }
+  .modal-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 26px; align-items: start; }
   @media (max-width: 760px) { .modal-grid { grid-template-columns: 1fr; } }
   .notes-side { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; position: sticky; top: 0; }
+  .note-history { max-height: 360px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; padding-right: 4px; }
+  .note-entry { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; }
+  .note-entry-head { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: var(--gold); margin-bottom: 3px; }
+  .note-entry-body { font-size: 12.5px; color: var(--text-1); white-space: pre-wrap; line-height: 1.5; }
+  .collapse { border-top: 1px solid var(--border); }
+  .collapse summary { cursor: pointer; padding: 11px 0; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); list-style: none; display: flex; align-items: center; gap: 7px; }
+  .collapse summary::-webkit-details-marker { display: none; }
+  .collapse summary::before { content: '\25B8'; font-size: 10px; transition: transform 0.15s ease; }
+  .collapse[open] summary::before { transform: rotate(90deg); }
 
   .empty-state { text-align: center; padding: 70px 24px; color: var(--text-3); }
   .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
@@ -497,6 +506,7 @@
           <div class="results-sub" id="results-sub"></div>
         </div>
         <div class="results-actions">
+          <button class="btn-sm ghost details-toggle" onclick="toggleCardDetails()">Details</button>
           <button class="btn-sm ghost" onclick="refreshResults()">Refresh</button>
           <button class="btn-sm" onclick="goTo('screen-generate')">New Search</button>
         </div>
@@ -542,7 +552,8 @@
           <div class="results-sub" id="tbc-sub">Leads nobody has actioned yet, newest first.</div>
         </div>
         <div class="results-actions">
-          <button class="btn-sm ghost" onclick="openTBC()">Refresh</button>
+          <button class="btn-sm ghost details-toggle" onclick="toggleCardDetails()">Details</button>
+          <button class="btn-sm ghost" onclick="openTBC(tbcMode)">Refresh</button>
         </div>
       </div>
       <div class="card-grid" id="tbc-grid"></div>
@@ -740,6 +751,7 @@ async function bootApp() {
   } catch (e) {
     toast('Could not load options: ' + e.message, true);
   }
+  updateDetailsBtns();
   loadHome();
 }
 function fillSelect(id, rows) {
@@ -943,6 +955,16 @@ function renderResults() {
   grid.innerHTML = sessionRows.slice().sort((a, b) => a.Id - b.Id).map(cardHTML).join('');
 }
 
+function cardDetailsOpen() { return (localStorage.getItem('spp-card-details') || 'open') !== 'closed'; }
+function toggleCardDetails() {
+  localStorage.setItem('spp-card-details', cardDetailsOpen() ? 'closed' : 'open');
+  updateDetailsBtns();
+  renderResults();
+  if (document.getElementById('screen-tbc').classList.contains('active')) renderTBC();
+}
+function updateDetailsBtns() {
+  document.querySelectorAll('.details-toggle').forEach(b => { b.textContent = cardDetailsOpen() ? 'Details: always shown' : 'Details: click to open'; });
+}
 function statusOf(r) {
   if (r.RejectedBy) return 'rejected';
   if (r.ClaimedBy) return 'claimed';
@@ -1016,8 +1038,8 @@ function cardHTML(r) {
     '<div class="badge-row">' + urlBadge(r) + btBadge(r) + stateBadge + '</div>' +
     btInfo(r) +
     (parseInt(r.BTMatchCount || '0', 10) > 1 ? '<div id="bt-inline-' + r.Id + '"><button class="btn-sm ghost" style="width:100%;" onclick="loadBTInline(' + r.Id + ')">View all ' + parseInt(r.BTMatchCount, 10) + ' possible BT matches</button></div>' : '') +
-    '<div class="card-desc">' + esc(r.Description || '') + '</div>' +
-    (r.SPPProductHook ? '<div class="card-hook">' + esc(r.SPPProductHook) + '</div>' : '') +
+    (r.Description ? '<details class="collapse"' + (cardDetailsOpen() ? ' open' : '') + '><summary>Description</summary><div class="card-desc" style="padding-bottom:8px;">' + esc(r.Description) + '</div></details>' : '') +
+    (r.SPPProductHook ? '<details class="collapse"' + (cardDetailsOpen() ? ' open' : '') + '><summary>SPP angle</summary><div class="card-hook" style="margin-bottom:8px;">' + esc(r.SPPProductHook) + '</div></details>' : '') +
     (r.WebsiteURL ? '<a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">&#128279; ' + esc(hostOf(r.WebsiteURL)) + '</a>' : '') +
     actions + qualityRow(r) + '</div>';
 }
@@ -1130,10 +1152,18 @@ async function saveNote(id) {
   const box = document.getElementById('note-' + id);
   if (!box) return;
   const val = box.value.trim();
+  if (!val) { toast('Type a note first.', true); return; }
+  const r = findRow(id);
+  const now = new Date();
+  const entry = val.startsWith('[') ? val :
+    '[' + now.toLocaleDateString('en-GB') + ' ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' - ' + displayName(ME.email) + '] ' + val;
+  const combined = (r && r.LeadNotes && String(r.LeadNotes).trim() ? String(r.LeadNotes).replace(/\s+$/, '') + '\n\n' : '') + entry;
   try {
-    await dataApi('update', { itemId: String(id), fields: { LeadNotes: val || null } });
-    const row = findRow(id);
-    if (row) row.LeadNotes = val;
+    await dataApi('update', { itemId: String(id), fields: { LeadNotes: combined } });
+    if (r) r.LeadNotes = combined;
+    box.value = '';
+    const hist = document.getElementById('note-hist-' + id);
+    if (hist) hist.innerHTML = noteHistoryHTML(combined);
     toast('Note saved.');
   } catch (e) { toast('Could not save note: ' + e.message, true); }
 }
@@ -1232,17 +1262,32 @@ function renderTBC() {
 }
 
 /* ---------------- lead modal + BT panel ---------------- */
+function noteHistoryHTML(notes) {
+  if (!notes || !String(notes).trim()) return '<div class="row-dim" style="font-size:12px;">No notes yet.</div>';
+  const entries = String(notes).split(/\n+(?=\[)/).map(s => s.trim()).filter(Boolean);
+  return entries.reverse().map(en => {
+    let head = '', body = en;
+    if (en.startsWith('[')) { const i = en.indexOf(']'); if (i > 0) { head = en.slice(1, i); body = en.slice(i + 1).trim(); } }
+    return '<div class="note-entry">' + (head ? '<div class="note-entry-head">' + esc(head) + '</div>' : '') +
+      '<div class="note-entry-body">' + esc(body) + '</div></div>';
+  }).join('');
+}
 function openLeadModal(id, withNotes) {
   const r = findRow(id);
   if (!r) return;
   document.getElementById('modal-title').textContent = r.Title;
   document.querySelector('#modal-overlay .modal').classList.toggle('with-notes', !!withNotes);
   const count = parseInt(r.BTMatchCount || '0', 10) || 0;
+  const descSec = r.Description ? (withNotes
+    ? '<details class="collapse"><summary>Description</summary><div class="card-desc" style="padding-bottom:10px;">' + esc(r.Description) + '</div></details>'
+    : '<div class="modal-section"><h4>Description</h4><div class="card-desc">' + esc(r.Description) + '</div></div>') : '';
+  const hookSec = r.SPPProductHook ? (withNotes
+    ? '<details class="collapse"><summary>SPP angle</summary><div class="card-hook" style="margin-bottom:10px;">' + esc(r.SPPProductHook) + '</div></details>'
+    : '<div class="modal-section"><h4>SPP angle</h4><div class="card-hook">' + esc(r.SPPProductHook) + '</div></div>') : '';
   const detail =
     '<div class="card-loc">' + esc(r.Location || '') + (r.Sector ? ' &middot; ' + esc(r.Sector) : '') + '</div>' +
     '<div class="badge-row" style="margin-top:8px;">' + urlBadge(r) + btBadge(r) + '</div>' +
-    '<div class="modal-section"><h4>Description</h4><div class="card-desc">' + esc(r.Description || '') + '</div></div>' +
-    (r.SPPProductHook ? '<div class="modal-section"><h4>SPP angle</h4><div class="card-hook">' + esc(r.SPPProductHook) + '</div></div>' : '') +
+    descSec + hookSec +
     '<div class="modal-section"><h4>Details</h4><div class="bt-info">' +
     (r.WebsiteURL ? 'Website: <a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">' + esc(r.WebsiteURL) + '</a><br>' : '') +
     (r.EmailDomain ? 'Email domain: ' + esc(r.EmailDomain) + '<br>' : '') +
@@ -1256,10 +1301,11 @@ function openLeadModal(id, withNotes) {
   if (withNotes) {
     document.getElementById('modal-body').innerHTML = '<div class="modal-grid"><div>' + detail + '</div>' +
       '<aside class="notes-side"><div class="modal-section" style="margin-top:0;"><h4>Notes</h4>' +
-      '<textarea class="note-box" id="note-' + r.Id + '" style="min-height:260px;" placeholder="Add your notes about this lead..." onkeydown="if(event.ctrlKey && event.key === \';\'){event.preventDefault();insertStamp(' + r.Id + ');}">' + esc(r.LeadNotes || '') + '</textarea>' +
+      '<div class="note-history" id="note-hist-' + r.Id + '">' + noteHistoryHTML(r.LeadNotes) + '</div>' +
+      '<textarea class="note-box" id="note-' + r.Id + '" style="min-height:110px;" placeholder="Type a new note..." onkeydown="if(event.ctrlKey && event.key === \';\'){event.preventDefault();insertStamp(' + r.Id + ');}"></textarea>' +
       '<div style="display:flex;gap:8px;margin-top:10px;"><button class="btn-sm" onclick="saveNote(' + r.Id + ')">Save note</button>' +
       '<button class="btn-sm ghost" onclick="insertStamp(' + r.Id + ')" title="Or press Ctrl+; in the notes box">+ Time stamp</button></div>' +
-      '<div class="row-dim" style="margin-top:8px;font-size:11px;">Ctrl+; inserts a time stamp. Saved onto the lead record in SharePoint.</div></div></aside></div>';
+      '<div class="row-dim" style="margin-top:8px;font-size:11px;">Each save adds a separate stamped note above.</div></div></aside></div>';
   } else {
     document.getElementById('modal-body').innerHTML = detail;
   }
