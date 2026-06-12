@@ -508,7 +508,7 @@
           <div class="results-sub" id="results-sub"></div>
         </div>
         <div class="results-actions">
-          <button class="btn-sm ghost details-toggle" onclick="toggleCardDetails()">Details</button>
+          <button class="btn-sm ghost details-toggle" data-page="results" onclick="toggleCardDetails('results')">Details</button>
           <button class="btn-sm ghost" onclick="refreshResults()">Refresh</button>
           <button class="btn-sm" onclick="goTo('screen-generate')">New Search</button>
         </div>
@@ -532,7 +532,8 @@
           <div class="results-sub" id="claimed-sub"></div>
         </div>
         <div class="results-actions">
-          <button class="btn-sm ghost" onclick="exportClaimedCSV()">Export CSV</button>
+          <button class="btn-sm ghost details-toggle" data-page="claimed" onclick="toggleCardDetails('claimed')">Details</button>
+          <button class="btn-sm ghost" onclick="exportReport()">Export</button>
           <button class="btn-sm ghost" onclick="openClaimed()">Refresh</button>
         </div>
       </div>
@@ -554,7 +555,7 @@
           <div class="results-sub" id="tbc-sub">Leads nobody has actioned yet, newest first.</div>
         </div>
         <div class="results-actions">
-          <button class="btn-sm ghost details-toggle" onclick="toggleCardDetails()">Details</button>
+          <button class="btn-sm ghost details-toggle" data-page="tbc" onclick="toggleCardDetails('tbc')">Details</button>
           <button class="btn-sm ghost" onclick="openTBC(tbcMode)">Refresh</button>
         </div>
       </div>
@@ -1002,18 +1003,23 @@ function renderResults() {
   document.getElementById('results-sub').textContent = sessionRows.length + ' lead' + (sessionRows.length === 1 ? '' : 's') + (f ? ' - generated ' + fmtDate(f.GeneratedDate) + ' by ' + displayName(f.GeneratedBy) : '');
   document.getElementById('searching-banner').style.display = watchTimer ? 'flex' : 'none';
   document.getElementById('results-empty').style.display = sessionRows.length === 0 ? 'block' : 'none';
-  grid.innerHTML = sessionRows.slice().sort((a, b) => a.Id - b.Id).map(cardHTML).join('');
+  grid.innerHTML = sessionRows.slice().sort((a, b) => a.Id - b.Id).map(r => cardHTML(r, 'results')).join('');
 }
 
-function cardDetailsOpen() { return (localStorage.getItem('spp-card-details') || 'open') !== 'closed'; }
-function toggleCardDetails() {
-  localStorage.setItem('spp-card-details', cardDetailsOpen() ? 'closed' : 'open');
+function cardDetailsOpen(page) { return (localStorage.getItem('spp-card-details-' + (page || 'results')) || 'open') !== 'closed'; }
+function toggleCardDetails(page) {
+  localStorage.setItem('spp-card-details-' + page, cardDetailsOpen(page) ? 'closed' : 'open');
   updateDetailsBtns();
-  renderResults();
-  if (document.getElementById('screen-tbc').classList.contains('active')) renderTBC();
+  if (page === 'results') renderResults();
+  if (page === 'tbc' && document.getElementById('screen-tbc').classList.contains('active')) renderTBC();
+  if (page === 'claimed' && document.getElementById('screen-claimed').classList.contains('active')) renderClaimed();
 }
 function updateDetailsBtns() {
-  document.querySelectorAll('.details-toggle').forEach(b => { b.textContent = cardDetailsOpen() ? 'Details: always shown' : 'Details: click to open'; });
+  document.querySelectorAll('.details-toggle').forEach(b => { b.textContent = cardDetailsOpen(b.dataset.page) ? 'Details: always shown' : 'Details: click to open'; });
+}
+function detailBits(r, page) {
+  return (r.Description ? '<details class="collapse"' + (cardDetailsOpen(page) ? ' open' : '') + '><summary>Description</summary><div class="card-desc" style="padding-bottom:8px;">' + esc(r.Description) + '</div></details>' : '') +
+    (r.SPPProductHook ? '<details class="collapse"' + (cardDetailsOpen(page) ? ' open' : '') + '><summary>SPP angle</summary><div class="card-hook" style="margin-bottom:8px;">' + esc(r.SPPProductHook) + '</div></details>' : '');
 }
 function statusOf(r) {
   if (r.RejectedBy) return 'rejected';
@@ -1060,7 +1066,8 @@ function qualityRow(r) {
     '<button class="qual-btn q-ok' + (q === 'Neutral' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Neutral\')">OK</button>' +
     '<button class="qual-btn q-good' + (q === 'Good' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Good\')">Good</button></div>';
 }
-function cardHTML(r) {
+function cardHTML(r, page) {
+  page = page || 'results';
   const st = statusOf(r);
   let stateBadge = '';
   if (st === 'claimed') stateBadge = '<span class="badge b-green">Claimed by ' + esc(displayName(r.ClaimedBy)) + '</span>';
@@ -1088,8 +1095,7 @@ function cardHTML(r) {
     '<div class="badge-row">' + urlBadge(r) + btBadge(r) + stateBadge + '</div>' +
     btInfo(r) +
     (parseInt(r.BTMatchCount || '0', 10) > 1 ? '<div id="bt-inline-' + r.Id + '"><button class="btn-sm ghost" style="width:100%;" onclick="loadBTInline(' + r.Id + ')">View all ' + parseInt(r.BTMatchCount, 10) + ' possible BT matches</button></div>' : '') +
-    (r.Description ? '<details class="collapse"' + (cardDetailsOpen() ? ' open' : '') + '><summary>Description</summary><div class="card-desc" style="padding-bottom:8px;">' + esc(r.Description) + '</div></details>' : '') +
-    (r.SPPProductHook ? '<details class="collapse"' + (cardDetailsOpen() ? ' open' : '') + '><summary>SPP angle</summary><div class="card-hook" style="margin-bottom:8px;">' + esc(r.SPPProductHook) + '</div></details>' : '') +
+    detailBits(r, page) +
     (r.WebsiteURL ? '<a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">&#128279; ' + esc(hostOf(r.WebsiteURL)) + '</a>' : '') +
     actions + qualityRow(r) + '</div>';
 }
@@ -1105,6 +1111,9 @@ function showDialog(opts) {
     if (opts.select) {
       extra.innerHTML = '<select class="form-select" id="dialog-select">' +
         opts.select.map(o => '<option value="' + esc(o) + '">' + esc(o) + '</option>').join('') + '</select>';
+    } else if (opts.checks) {
+      extra.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">' + opts.checks.map(c =>
+        '<label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;"><input type="checkbox" class="dlg-chk" value="' + esc(c.value) + '"' + (c.checked ? ' checked' : '') + '> ' + esc(c.label) + '</label>').join('') + '</div>';
     } else {
       extra.innerHTML = '';
     }
@@ -1118,7 +1127,11 @@ function dialogDone(confirmed) {
   document.getElementById('dialog-overlay').classList.remove('open');
   if (!dialogResolve) return;
   const sel = document.getElementById('dialog-select');
-  dialogResolve(confirmed ? (sel ? sel.value : true) : null);
+  const chks = document.querySelectorAll('#dialog-extra .dlg-chk');
+  let result = true;
+  if (sel) result = sel.value;
+  else if (chks.length) result = Array.from(chks).filter(c => c.checked).map(c => c.value);
+  dialogResolve(confirmed ? result : null);
   dialogResolve = null;
 }
 document.getElementById('dialog-cancel').onclick = () => dialogDone(false);
@@ -1237,12 +1250,54 @@ function renderClaimed() {
   document.getElementById('claimed-table').style.display = mine.length ? 'block' : 'none';
   document.getElementById('claimed-table').innerHTML = head + mine.map(r =>
     '<div class="table-row' + (r.__gone || !r.ClaimedBy || r.RejectedBy ? ' is-gone' : '') + '" style="grid-template-columns:' + cols + ';" onclick="openLeadModal(' + r.Id + ', true)">' +
-    '<div class="row-name">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' +
+    '<div onclick="event.stopPropagation()"><div class="row-name" style="cursor:pointer;" onclick="openLeadModal(' + r.Id + ', true)">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' + detailBits(r, 'claimed') + '</div>' +
     '<div class="row-dim">' + fmtDate(r.ClaimedDate) + '</div>' +
     '<div onclick="event.stopPropagation()" style="display:flex;gap:8px;justify-content:flex-end;">' +
     '<button class="btn-unclaim" onclick="unclaimLead(' + r.Id + ')">Unclaim</button>' +
     '<button class="btn-unclaim" style="color:var(--amber);border-color:var(--amber-bd);" onclick="rejectLead(' + r.Id + ')">Reject</button></div></div>'
   ).join('');
+}
+const EXPORT_FIELDS = [
+  ['Title', 'Company'], ['Location', 'Location'], ['Sector', 'Sector'], ['Description', 'Description'],
+  ['SPPProductHook', 'SPP angle'], ['WebsiteURL', 'Website'], ['EmailDomain', 'Email domain'],
+  ['ContactName', 'Contact'], ['Industry', 'Industry'], ['ProductRange', 'Product range'], ['Region', 'Region'],
+  ['ClaimedDate', 'Claimed date'], ['QualityRating', 'Quality'], ['LeadNotes', 'Notes']
+];
+async function exportReport() {
+  if (!claimedRows.length) { toast('Nothing to export.', true); return; }
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem('spp-export-fields') || '[]'); } catch (e) {}
+  const picked = await showDialog({
+    title: 'Export claimed leads',
+    message: 'Choose the fields to include, then a print-ready report opens in a new tab (Ctrl+P to save as PDF).',
+    checks: EXPORT_FIELDS.map(f => ({ value: f[0], label: f[1], checked: saved.length ? saved.includes(f[0]) : true })),
+    confirmLabel: 'Create report', danger: false
+  });
+  if (!picked || !picked.length) return;
+  localStorage.setItem('spp-export-fields', JSON.stringify(picked));
+  const fields = EXPORT_FIELDS.filter(f => picked.includes(f[0]));
+  const w = window.open('', '_blank');
+  if (!w) { toast('Pop-up blocked - allow pop-ups for this site.', true); return; }
+  const rowsHtml = claimedRows.map(r =>
+    '<div class="lead"><h2>' + esc(r.Title) + '</h2><table>' +
+    fields.filter(f => f[0] !== 'Title' && r[f[0]]).map(f =>
+      '<tr><th>' + esc(f[1]) + '</th><td>' + (f[0] === 'ClaimedDate' ? fmtDate(r[f[0]]) : esc(r[f[0]])) + '</td></tr>').join('') +
+    '</table></div>').join('');
+  w.document.write('<!DOCTYPE html><html><head><title>SPP Claimed Leads - ' + esc(displayName(ME.email)) + '</title><style>' +
+    'body{font-family:Segoe UI,Arial,sans-serif;color:#14301d;margin:40px;max-width:900px;}' +
+    'h1{color:#007835;font-size:22px;border-bottom:3px solid #a43f17;padding-bottom:8px;}' +
+    '.meta{color:#666;font-size:12px;margin-bottom:24px;}' +
+    '.lead{page-break-inside:avoid;border:1px solid #d9e2d9;border-radius:10px;padding:16px 20px;margin-bottom:16px;}' +
+    'h2{color:#007835;font-size:16px;margin:0 0 10px;}' +
+    'table{border-collapse:collapse;width:100%;}' +
+    'th{text-align:left;vertical-align:top;color:#a43f17;font-size:11px;text-transform:uppercase;padding:4px 14px 4px 0;width:120px;}' +
+    'td{font-size:13px;padding:4px 0;white-space:pre-wrap;}' +
+    '@media print{.noprint{display:none;}}' +
+    '</style></head><body>' +
+    '<h1>SPP Claimed Leads</h1><div class="meta">' + esc(displayName(ME.email)) + ' &middot; ' + new Date().toLocaleDateString('en-GB') + ' &middot; ' + claimedRows.length + ' leads</div>' +
+    '<button class="noprint" style="margin-bottom:18px;padding:8px 16px;cursor:pointer;" onclick="window.print()">Print / Save as PDF</button>' +
+    rowsHtml + '</body></html>');
+  w.document.close();
 }
 function exportClaimedCSV() {
   if (!claimedRows.length) { toast('Nothing to export.', true); return; }
@@ -1298,15 +1353,15 @@ function renderTBC() {
           btns = '<button class="btn-unclaim" style="color:var(--text-2);border-color:var(--border);" onclick="undoTBC(' + r.Id + ')">Undo TBC</button>' +
             '<button class="btn-unclaim" style="color:var(--green);border-color:var(--green-bd);" onclick="claimLead(' + r.Id + ')">Claim</button>';
         }
-        return '<div class="table-row" style="grid-template-columns:' + cols + ';" onclick="openLeadModal(' + r.Id + ', true)">' +
-        '<div class="row-name">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' +
+        return '<div class="table-row" style="grid-template-columns:' + cols + ';">' +
+        '<div><div class="row-name" style="cursor:pointer;" onclick="openLeadModal(' + r.Id + ', true)">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' + detailBits(r, 'tbc') + '</div>' +
         '<div class="row-dim">' + fmtDate(r.GeneratedDate) + '</div>' +
         '<div onclick="event.stopPropagation()" style="display:flex;gap:8px;justify-content:flex-end;">' + btns + '</div></div>';
       }).join('') + '</div>';
   } else {
     grid.style.display = '';
     const keep = sessionRows; sessionRows = open;            // reuse card renderer against TBC data
-    grid.innerHTML = open.map(cardHTML).join('');
+    grid.innerHTML = open.map(r => cardHTML(r, 'tbc')).join('');
     sessionRows = keep;
   }
 }
