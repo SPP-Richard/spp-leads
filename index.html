@@ -1353,8 +1353,8 @@ function renderTBC() {
           btns = '<button class="btn-unclaim" style="color:var(--text-2);border-color:var(--border);" onclick="undoTBC(' + r.Id + ')">Undo TBC</button>' +
             '<button class="btn-unclaim" style="color:var(--green);border-color:var(--green-bd);" onclick="claimLead(' + r.Id + ')">Claim</button>';
         }
-        return '<div class="table-row" style="grid-template-columns:' + cols + ';">' +
-        '<div><div class="row-name" style="cursor:pointer;" onclick="openLeadModal(' + r.Id + ', true)">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' + detailBits(r, 'tbc') + '</div>' +
+        return '<div class="table-row" style="grid-template-columns:' + cols + ';" onclick="openLeadModal(' + r.Id + ', true)">' +
+        '<div class="row-name">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' +
         '<div class="row-dim">' + fmtDate(r.GeneratedDate) + '</div>' +
         '<div onclick="event.stopPropagation()" style="display:flex;gap:8px;justify-content:flex-end;">' + btns + '</div></div>';
       }).join('') + '</div>';
