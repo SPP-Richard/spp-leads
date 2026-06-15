@@ -370,7 +370,7 @@
   .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
   .toast.error { background: var(--red); }
 
-  .app-footer { text-align: center; padding: 18px; color: var(--text-3); font-size: 13px; font-weight: 300; }
+  .app-footer { text-align: center; padding: 18px; color: var(--text-3); font-size: 11.5px; font-weight: 300; }
 
   /* ---- BOLD MODE TOGGLE ---- */
   .bold-toggle { display: flex; align-items: center; gap: 8px; margin-right: 6px; }
@@ -1391,7 +1391,82 @@ async function exportReport() {
     'th{text-align:left;vertical-align:top;color:#a43f17;font-size:11px;text-transform:uppercase;padding:4px 14px 4px 0;width:120px;}' +
     'td{font-size:13px;padding:4px 0;white-space:pre-wrap;}' +
     '@media print{.noprint{display:none;}}' +
-    '</style></head><body>' +
+    '
+  /* ---- BOLD MODE TOGGLE ---- */
+  .bold-toggle { display: flex; align-items: center; gap: 8px; margin-right: 6px; }
+  .bold-toggle-label { font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); white-space: nowrap; cursor: pointer; user-select: none; }
+  .bold-toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; cursor: pointer; }
+  .bold-toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .bold-toggle-track { position: absolute; inset: 0; background: rgba(255,255,255,0.18); border-radius: 12px; transition: background 0.2s ease; }
+  .bold-toggle-switch input:checked + .bold-toggle-track { background: var(--gold-bright); }
+  .bold-toggle-knob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+  .bold-toggle-switch input:checked ~ .bold-toggle-knob { transform: translateX(18px); }
+
+  /* ---- BOLD MODE ACTIVE ---- */
+  body.bold-mode { font-size: 21px; font-weight: 500; line-height: 1.6; letter-spacing: 0.01em; }
+  body.bold-mode .app-title { font-size: 23px; }
+  body.bold-mode .nav-btn { font-size: 17px; padding: 10px 16px; }
+  body.bold-mode .header-user { font-size: 17px; }
+  body.bold-mode .user-avatar { width: 40px; height: 40px; font-size: 17px; }
+  body.bold-mode .btn-signout { font-size: 16px; padding: 8px 16px; }
+  body.bold-mode .signin-heading { font-size: 36px; }
+  body.bold-mode .signin-sub { font-size: 20px; }
+  body.bold-mode .home-eyebrow { font-size: 15px; }
+  body.bold-mode .home-heading { font-size: 44px; }
+  body.bold-mode .home-sub { font-size: 21px; }
+  body.bold-mode .btn-primary, body.bold-mode .btn-secondary { font-size: 22px; padding: 24px 32px; }
+  body.bold-mode .btn-primary .btn-label, body.bold-mode .btn-secondary .btn-label { font-size: 22px; }
+  body.bold-mode .btn-primary .btn-desc, body.bold-mode .btn-secondary .btn-desc { font-size: 16px; }
+  body.bold-mode .btn-primary .btn-icon, body.bold-mode .btn-secondary .btn-icon { width: 48px; height: 48px; font-size: 24px; }
+  body.bold-mode .stat-num { font-size: 34px; }
+  body.bold-mode .stat-lbl { font-size: 15px; }
+  body.bold-mode .recent-head { font-size: 16px; }
+  body.bold-mode .recent-crit { font-size: 17px; }
+  body.bold-mode .recent-meta { font-size: 15px; }
+  body.bold-mode .form-heading { font-size: 32px; }
+  body.bold-mode .form-sub { font-size: 20px; }
+  body.bold-mode .form-label { font-size: 17px; }
+  body.bold-mode .form-select, body.bold-mode .form-input { font-size: 20px; padding: 16px 18px; }
+  body.bold-mode .form-submit { font-size: 20px; padding: 18px 32px; }
+  body.bold-mode .screen-back { font-size: 17px; }
+  body.bold-mode .loading-heading { font-size: 26px; }
+  body.bold-mode .loading-sub { font-size: 18px; }
+  body.bold-mode .loading-step { font-size: 18px; }
+  body.bold-mode .results-heading { font-size: 30px; }
+  body.bold-mode .results-sub { font-size: 18px; }
+  body.bold-mode .btn-sm { font-size: 17px; padding: 12px 20px; }
+  body.bold-mode .card-name { font-size: 21px; }
+  body.bold-mode .card-conf { font-size: 16px; padding: 6px 12px; }
+  body.bold-mode .card-loc { font-size: 16px; }
+  body.bold-mode .card-desc { font-size: 18px; font-weight: 400; }
+  body.bold-mode .card-hook { font-size: 17px; padding: 12px 14px; }
+  body.bold-mode .card-url { font-size: 16px; }
+  body.bold-mode .badge { font-size: 15px; padding: 5px 12px; }
+  body.bold-mode .bt-info { font-size: 16px; padding: 10px 13px; }
+  body.bold-mode .action-btn { font-size: 17px; padding: 12px 0; }
+  body.bold-mode .qual-btn { font-size: 16px; padding: 7px 16px; }
+  body.bold-mode .emoji-lbl { font-size: 15px; }
+  body.bold-mode .table-head { font-size: 15px; }
+  body.bold-mode .table-row { font-size: 18px; padding: 16px 18px; }
+  body.bold-mode .row-name { font-size: 18px; }
+  body.bold-mode .row-dim { font-size: 16px; }
+  body.bold-mode .btn-unclaim { font-size: 16px; }
+  body.bold-mode .modal-title { font-size: 27px; }
+  body.bold-mode .modal-section h4 { font-size: 16px; }
+  body.bold-mode .bt-match-row { font-size: 17px; }
+  body.bold-mode .bt-match-head { font-size: 14px; }
+  body.bold-mode .note-box { font-size: 17px; min-height: 60px; }
+  body.bold-mode .note-entry-head { font-size: 15px; }
+  body.bold-mode .note-entry-body { font-size: 17px; }
+  body.bold-mode .collapse summary { font-size: 16px; }
+  body.bold-mode .toast { font-size: 18px; padding: 14px 24px; }
+  body.bold-mode .app-footer { font-size: 15px; }
+  body.bold-mode .bold-toggle-label { font-size: 14px; }
+  body.bold-mode .searching-banner { font-size: 17px; }
+  body.bold-mode .btn-danger { font-size: 17px; padding: 12px 20px; }
+  body.bold-mode .empty-state .empty-icon { font-size: 52px; }
+  body.bold-mode .empty-state .empty-msg { font-size: 21px; }
+</style></head><body>' +
     '<h1>SPP Claimed Leads</h1><div class="meta">' + esc(displayName(ME.email)) + ' &middot; ' + new Date().toLocaleDateString('en-GB') + ' &middot; ' + claimedRows.length + ' leads</div>' +
     '<button class="noprint" style="margin-bottom:18px;padding:8px 16px;cursor:pointer;" onclick="window.print()">Print / Save as PDF</button>' +
     rowsHtml + '</body></html>');
@@ -1488,4 +1563,86 @@ function openLeadModal(id, withNotes) {
     ? '<details class="collapse"' + openAttr + '><summary>Description</summary><div class="card-desc" style="padding-bottom:10px;">' + esc(r.Description) + '</div></details>'
     : '<div class="modal-section"><h4>Description</h4><div class="card-desc">' + esc(r.Description) + '</div></div>') : '';
   const hookSec = r.SPPProductHook ? (withNotes
-    ? '<details class="collapse"' + openAttr + '><su
+    ? '<details class="collapse"' + openAttr + '><summary>SPP angle</summary><div class="card-hook" style="margin-bottom:10px;">' + esc(r.SPPProductHook) + '</div></details>'
+    : '<div class="modal-section"><h4>SPP angle</h4><div class="card-hook">' + esc(r.SPPProductHook) + '</div></div>') : '';
+  const detail =
+    '<div class="card-loc">' + esc(r.Location || '') + (r.Sector ? ' &middot; ' + esc(r.Sector) : '') + '</div>' +
+    '<div class="badge-row" style="margin-top:8px;">' + urlBadge(r) + btBadge(r) + '</div>' +
+    descSec + hookSec +
+    '<div class="modal-section"><h4>Details</h4><div class="bt-info">' +
+    (r.WebsiteURL ? 'Website: <a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">' + esc(r.WebsiteURL) + '</a><br>' : '') +
+    (r.EmailDomain ? 'Email domain: ' + esc(r.EmailDomain) + '<br>' : '') +
+    (r.ContactName ? 'Contact: ' + esc(r.ContactName) + (r.ContactRole ? ' (' + esc(r.ContactRole) + ')' : '') + '<br>' : '') +
+    'Generated ' + fmtDate(r.GeneratedDate) + ' by ' + esc(displayName(r.GeneratedBy)) +
+    (r.ClaimedBy ? '<br>Claimed by ' + esc(displayName(r.ClaimedBy)) + ' on ' + fmtDate(r.ClaimedDate) : '') +
+    (r.RejectReason ? '<br>Rejected: ' + esc(r.RejectReason) : '') +
+    '</div></div>' +
+    btInfo(r) +
+    (count >= 1 ? '<div class="modal-section"><h4>BT customer records</h4><div id="bt-panel"><button class="btn-sm ghost" onclick="loadBTMatches(' + r.Id + ')">Load ' + (count > 1 ? 'all ' + count + ' matching records' : 'matching record') + '</button></div></div>' : '');
+  if (withNotes) {
+    document.getElementById('modal-body').innerHTML = '<div class="modal-grid"><div>' + detail +
+      '<div class="modal-section"><h4>Add a note</h4>' +
+      '<textarea class="note-box" id="note-' + r.Id + '" style="min-height:90px;" placeholder="Type a new note..."></textarea>' +
+      '<div style="display:flex;gap:10px;margin-top:10px;align-items:center;"><button class="btn-sm" onclick="saveNote(' + r.Id + ')">Save note</button>' +
+      '<span class="row-dim" style="font-size:11px;">Time-stamped automatically on save.</span></div></div></div>' +
+      '<aside class="notes-side"><div class="modal-section" style="margin-top:0;"><h4>Notes</h4>' +
+      '<div class="note-history" id="note-hist-' + r.Id + '">' + noteHistoryHTML(r.LeadNotes) + '</div></div></aside></div>';
+  } else {
+    document.getElementById('modal-body').innerHTML = detail;
+  }
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function openBTPanel(id) { openLeadModal(id); loadBTMatches(id); }
+function btTableHTML(rows) {
+  return '<div class="bt-match-table"><div class="bt-match-head" style="grid-template-columns:2fr 0.9fr 1fr 1.2fr;"><div>Customer</div><div>Rep</div><div>Status</div><div>Phone</div></div>' +
+    rows.map(m => '<div class="bt-match-row" style="grid-template-columns:2fr 0.9fr 1fr 1.2fr;"><div class="row-name">' + esc(m.Title) + '</div><div>' + esc(displayName(m.SalesRep || '')) + '</div><div>' + esc(m.CustomerStatus || '-') + '</div><div>' + (m.Telephone ? '<a class="card-url" href="tel:' + esc(String(m.Telephone).replace(/\s+/g, '')) + '">' + esc(m.Telephone) + '</a>' : '<span class="row-dim">-</span>') + '</div></div>').join('') + '</div>';
+}
+async function fetchBTRows(r) {
+  const cleaned = String(r.Title || '').toLowerCase().replace(/\bthe \b/g, '').replace(/ limited| ltd\.?| plc| & sons/g, '').trim();
+  const resp = await dataApi('searchBT', { domain: r.EmailDomain || '', name: cleaned.length >= 6 ? cleaned.substring(0, 8) : 'zzz-skip' });
+  return (resp && resp.value) || [];
+}
+async function loadBTMatches(id) {
+  const r = findRow(id);
+  if (!r) return;
+  const panel = document.getElementById('bt-panel');
+  if (!panel) return;
+  panel.innerHTML = '<div class="modal-loading"><span class="mini-spin"></span> Searching 6,000 BT customer records - takes 10-20 seconds...</div>';
+  try {
+    const rows = await fetchBTRows(r);
+    panel.innerHTML = rows.length ? btTableHTML(rows) : '<div class="card-desc">No matching BT records found.</div>';
+  } catch (e) {
+    panel.innerHTML = '<div class="card-desc">Could not load BT records: ' + esc(e.message) + '</div>';
+  }
+}
+async function loadBTInline(id) {
+  const r = findRow(id);
+  const box = document.getElementById('bt-inline-' + id);
+  if (!r || !box) return;
+  box.innerHTML = '<div class="modal-loading"><span class="mini-spin"></span> Searching BT records - 10-20 seconds...</div>';
+  try {
+    const rows = await fetchBTRows(r);
+    box.innerHTML = rows.length ? btTableHTML(rows) : '<div class="card-desc">No matching BT records found.</div>';
+  } catch (e) {
+    box.innerHTML = '<div class="card-desc">Could not load BT records: ' + esc(e.message) + '</div>';
+  }
+}
+
+/* ---------------- auto-refresh when returning to the tab ---------------- */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !account) return;
+  if (document.getElementById('dialog-overlay').classList.contains('open')) return;
+  if (document.getElementById('modal-overlay').classList.contains('open')) return;
+  if (document.getElementById('screen-tbc').classList.contains('active')) openTBC(tbcMode);
+  else if (document.getElementById('screen-claimed').classList.contains('active')) openClaimed();
+  else if (document.getElementById('screen-prevsearch').classList.contains('active')) openPrevSearches();
+  else if (document.getElementById('screen-home').classList.contains('active')) loadHome();
+  else if (document.getElementById('screen-results').classList.contains('active') && !watchTimer) refreshResults();
+});
+
+/* ---------------- start ---------------- */
+initMsal();
+</script>
+</body>
+</html>
