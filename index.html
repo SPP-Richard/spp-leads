@@ -461,6 +461,15 @@
   body.bold-mode .detail-pair > details { border-top: none; }
   body.bold-mode .detail-pair > details:not([open]) > div { display: block !important; }
   body.bold-mode .card-actions .action-btn { padding: 12px 0; }
+
+  /* ---- More button ---- */
+  .more-wrap { text-align: center; margin-top: 24px; }
+  .btn-more { display: inline-flex; align-items: center; gap: 8px; padding: 14px 36px; font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: #fff; background: var(--navy); border: none; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }
+  .btn-more:hover:not(:disabled) { background: var(--navy-light); }
+  .btn-more:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-more .mini-spin { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+  .btn-more:disabled .mini-spin { display: inline-block; }
+  body.bold-mode .btn-more { font-size: 19px; padding: 16px 42px; }
 </style>
 </head>
 <body>
@@ -619,6 +628,9 @@
         <div class="empty-icon">&#128269;</div>
         <div class="empty-msg" id="results-empty-msg">No leads in this session yet.</div>
       </div>
+      <div class="more-wrap" id="more-wrap" style="display:none;">
+        <button class="btn-more" id="btn-more" onclick="searchMore()"><span class="mini-spin"></span> Find More Leads</button>
+      </div>
     </div>
   </div>
 
@@ -758,6 +770,7 @@ const FALLBACK_REJECT_REASONS = ['Closed', 'Too small', 'Too big', 'Does not buy
 let sessionRows = [];        // rows of the session currently shown on Results
 let currentSession = null;
 let currentSessionLabel = '';
+let lastSearchParams = null;
 let watchTimer = null;
 let watchStart = 0;
 let watchLastCount = -1;
@@ -992,6 +1005,8 @@ async function openSession(encodedSid, elOrLabel) {
   document.getElementById('results-sub').textContent = 'Loading session...';
   document.getElementById('results-grid').innerHTML = '';
   document.getElementById('results-empty').style.display = 'none';
+  document.getElementById('more-wrap').style.display = 'none';
+  lastSearchParams = null;
   await refreshResults();
 }
 
@@ -1006,6 +1021,7 @@ async function startGenerate() {
   btn.disabled = true; btn.textContent = 'Starting...';
   try {
     const r = await api('generate', { text: industry, text_1: product, text_2: region });
+    lastSearchParams = { type: 'generate', text: industry, text_1: product, text_2: region };
     startWatch(r.sessionid, industry + ' / ' + product + ' / ' + region);
   } catch (e) {
     toast('Could not start search: ' + e.message, true);
@@ -1021,6 +1037,7 @@ async function startSimilar() {
   btn.disabled = true; btn.textContent = 'Starting...';
   try {
     const r = await api('similar', { text: url, text_1: kw, text_2: region });
+    lastSearchParams = { type: 'similar', text: url, text_1: kw, text_2: region };
     startWatch(r.sessionid, 'Similar to ' + hostOf(url));
   } catch (e) {
     toast('Could not start search: ' + e.message, true);
@@ -1089,6 +1106,7 @@ function finishWatch(found) {
   if (found) {
     toast('Search complete - ' + sessionRows.length + ' lead' + (sessionRows.length === 1 ? '' : 's') + '.');
     renderResults();
+    showMoreBtn(true);
   } else {
     goTo('screen-results');
     document.getElementById('results-heading').textContent = currentSessionLabel || 'Results';
@@ -1107,6 +1125,51 @@ async function refreshResults() {
     renderResults();
   } catch (e) { toast('Refresh failed: ' + e.message, true); }
 }
+
+function showMoreBtn(enabled) {
+  var wrap = document.getElementById('more-wrap');
+  var btn = document.getElementById('btn-more');
+  if (!lastSearchParams) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  btn.disabled = !enabled;
+  btn.innerHTML = enabled ? '<span class="mini-spin"></span> Find More Leads' : '<span class="mini-spin"></span> Searching…';
+}
+
+async function searchMore() {
+  if (!lastSearchParams) return;
+  var btn = document.getElementById('btn-more');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="mini-spin"></span> Searching…';
+  try {
+    var endpoint = lastSearchParams.type === 'similar' ? 'similar' : 'generate';
+    var payload = { text: lastSearchParams.text, text_1: lastSearchParams.text_1, text_2: lastSearchParams.text_2 };
+    var r = await api(endpoint, payload);
+    var moreSession = r.sessionid;
+    var pollCount = 0;
+    var moreRows = [];
+    var moreTimer = setInterval(async function() {
+      pollCount++;
+      try {
+        var res = await dataApi('getLeads', { sessionId: moreSession });
+        moreRows = (res && res.value) || [];
+      } catch(e) {}
+      if (moreRows.length > 0 || pollCount > 45) {
+        clearInterval(moreTimer);
+        if (moreRows.length > 0) {
+          sessionRows = sessionRows.concat(moreRows);
+          renderResults();
+          toast(moreRows.length + ' more lead' + (moreRows.length === 1 ? '' : 's') + ' added.');
+        } else {
+          toast('No additional leads found this round.', true);
+        }
+        showMoreBtn(true);
+      }
+    }, CONFIG.POLL_MS);
+  } catch(e) {
+    toast('Could not start search: ' + e.message, true);
+    showMoreBtn(true);
+  }
+}
 function renderResults() {
   const grid = document.getElementById('results-grid');
   const f = sessionRows[0];
@@ -1117,6 +1180,7 @@ function renderResults() {
   document.getElementById('results-heading').textContent = label || 'Results';
   document.getElementById('results-sub').textContent = sessionRows.length + ' lead' + (sessionRows.length === 1 ? '' : 's') + (f ? ' - generated ' + fmtDate(f.GeneratedDate) + ' by ' + displayName(f.GeneratedBy) : '');
   document.getElementById('searching-banner').style.display = watchTimer ? 'flex' : 'none';
+  if (!watchTimer && sessionRows.length > 0 && lastSearchParams) document.getElementById('more-wrap').style.display = 'block';
   document.getElementById('results-empty').style.display = sessionRows.length === 0 ? 'block' : 'none';
   grid.innerHTML = sessionRows.slice().sort((a, b) => a.Id - b.Id).map(r => cardHTML(r, 'results')).join('');
 }
