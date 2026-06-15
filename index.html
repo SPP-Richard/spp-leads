@@ -58,9 +58,9 @@
     background: var(--navy);
     padding: 0 28px;
     height: 62px;
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
-    justify-content: space-between;
     box-shadow: 0 2px 12px rgba(0,0,0,0.18);
     position: sticky;
     top: 0;
@@ -78,7 +78,8 @@
   .app-title { font-family: 'Outfit', sans-serif; font-size: 19px; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
   .app-title span { color: #fff; }
 
-  .header-nav { display: flex; align-items: center; gap: 4px; }
+  .header-nav { display: flex; align-items: center; gap: 4px; justify-content: center; }
+  .header-right { display: flex; align-items: center; gap: 12px; justify-content: flex-end; }
   .nav-btn {
     background: none; border: none; color: rgba(255,255,255,0.65);
     font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600;
@@ -277,6 +278,8 @@
 
   .bt-info { font-size: 14px; color: var(--text-2); background: var(--bg); border-radius: var(--radius-sm); padding: 8px 11px; line-height: 1.5; }
 
+  .detail-pair { display: flex; flex-direction: column; gap: 0; }
+  .card-spacer { flex: 1; }
   .card-actions { display: flex; gap: 8px; margin-top: 4px; }
   .action-btn {
     flex: 1; padding: 10px 0; border-radius: var(--radius-sm); border: none;
@@ -290,12 +293,13 @@
   .action-tbc:hover { border-color: var(--navy); color: var(--navy); }
   .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .emoji-row { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
-  .emoji-lbl { font-size: 13px; color: var(--text-3); margin-right: 2px; }
+  .emoji-row { display: flex; align-items: center; gap: 8px; justify-content: flex-start; }
+  .emoji-lbl { font-size: 13px; color: var(--text-3); margin-right: 2px; flex-shrink: 0; }
   .qual-btn {
     background: var(--card); border: 2px solid var(--border); color: var(--text-3);
     font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600;
-    padding: 6px 14px; border-radius: 8px; cursor: pointer; transition: var(--transition);
+    padding: 10px 0; border-radius: var(--radius-sm); cursor: pointer;
+    flex: 1; text-align: center; transition: var(--transition);
   }
   .qual-btn:hover { border-color: var(--text-2); color: var(--text-1); }
   .qual-btn.selected.q-poor { background: var(--red-bg); border-color: var(--red-bd); color: var(--red); }
@@ -373,7 +377,7 @@
   .app-footer { text-align: center; padding: 18px; color: var(--text-3); font-size: 11.5px; font-weight: 300; }
 
   /* ---- BOLD MODE TOGGLE ---- */
-  .bold-toggle { display: flex; align-items: center; gap: 8px; margin-right: 6px; }
+  .bold-toggle { display: flex; align-items: center; gap: 8px; }
   .bold-toggle-label { font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); white-space: nowrap; cursor: pointer; user-select: none; }
   .bold-toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; cursor: pointer; }
   .bold-toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
@@ -382,6 +386,7 @@
   .bold-toggle-knob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
   .bold-toggle-switch input:checked ~ .bold-toggle-knob { transform: translateX(18px); }
 
+  /* ---- BOLD MODE ACTIVE ---- */
   body.bold-mode { font-size: 21px; font-weight: 500; line-height: 1.6; letter-spacing: 0.01em; }
   body.bold-mode .app-title { font-size: 23px; }
   body.bold-mode .nav-btn { font-size: 17px; padding: 10px 16px; }
@@ -423,7 +428,7 @@
   body.bold-mode .badge { font-size: 15px; padding: 5px 12px; }
   body.bold-mode .bt-info { font-size: 16px; padding: 10px 13px; }
   body.bold-mode .action-btn { font-size: 17px; padding: 12px 0; }
-  body.bold-mode .qual-btn { font-size: 16px; padding: 7px 16px; }
+  body.bold-mode .qual-btn { font-size: 16px; padding: 12px 0; }
   body.bold-mode .emoji-lbl { font-size: 15px; }
   body.bold-mode .table-head { font-size: 15px; }
   body.bold-mode .table-row { font-size: 18px; padding: 16px 18px; }
@@ -445,6 +450,17 @@
   body.bold-mode .btn-danger { font-size: 17px; padding: 12px 20px; }
   body.bold-mode .empty-state .empty-icon { font-size: 52px; }
   body.bold-mode .empty-state .empty-msg { font-size: 21px; }
+
+  /* Bold Mode: single-column row layout for lead cards */
+  body.bold-mode .card-grid { grid-template-columns: 1fr; gap: 14px; }
+  body.bold-mode .lead-card { flex-direction: column; gap: 8px; padding: 18px 22px; }
+  body.bold-mode .lead-card .card-spacer { display: none; }
+  body.bold-mode .lead-card .collapse { border-top: none; }
+  body.bold-mode .lead-card .collapse summary { display: block; pointer-events: none; padding: 0 0 6px; font-size: 13px; }
+  body.bold-mode .detail-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  body.bold-mode .detail-pair > details { border-top: none; }
+  body.bold-mode .detail-pair > details:not([open]) > div { display: block !important; }
+  body.bold-mode .card-actions .action-btn { padding: 12px 0; }
 </style>
 </head>
 <body>
@@ -474,17 +490,19 @@
       <button class="nav-btn" data-nav="screen-tbc" onclick="openTBC('mine')">My TBC Leads</button>
       <button class="nav-btn" data-nav="screen-prevsearch" onclick="openPrevSearches()">Previous Searches</button>
     </nav>
-    <div class="bold-toggle">
-      <label class="bold-toggle-switch" title="Bold Mode - larger, clearer text">
-        <input type="checkbox" id="bold-mode-toggle" onchange="toggleBoldMode(this.checked)">
-        <span class="bold-toggle-track"></span>
-        <span class="bold-toggle-knob"></span>
-      </label>
-      <label class="bold-toggle-label" for="bold-mode-toggle">Bold Mode</label>
-    </div>
-    <div class="header-user">
-      <span id="user-name"></span>
-      <button class="btn-signout" onclick="signOut()">Sign out</button>
+    <div class="header-right">
+      <div class="bold-toggle">
+        <label class="bold-toggle-switch" title="Bold Mode - larger, clearer text">
+          <input type="checkbox" id="bold-mode-toggle" onchange="toggleBoldMode(this.checked)">
+          <span class="bold-toggle-track"></span>
+          <span class="bold-toggle-knob"></span>
+        </label>
+        <label class="bold-toggle-label" for="bold-mode-toggle">Bold Mode</label>
+      </div>
+      <div class="header-user">
+        <span id="user-name"></span>
+        <button class="btn-signout" onclick="signOut()">Sign out</button>
+      </div>
     </div>
   </header>
 
@@ -1115,8 +1133,10 @@ function updateDetailsBtns() {
   document.querySelectorAll('.details-toggle').forEach(b => { b.textContent = cardDetailsOpen(b.dataset.page) ? 'Details: always shown' : 'Details: click to open'; });
 }
 function detailBits(r, page) {
-  return (r.Description ? '<details class="collapse"' + (cardDetailsOpen(page) ? ' open' : '') + '><summary>Description</summary><div class="card-desc" style="padding-bottom:8px;">' + esc(r.Description) + '</div></details>' : '') +
-    (r.SPPProductHook ? '<details class="collapse"' + (cardDetailsOpen(page) ? ' open' : '') + '><summary>SPP angle</summary><div class="card-hook" style="margin-bottom:8px;">' + esc(r.SPPProductHook) + '</div></details>' : '');
+  var d = r.Description ? '<details class="collapse"' + (cardDetailsOpen(page) ? ' open' : '') + '><summary>Description</summary><div class="card-desc" style="padding-bottom:8px;">' + esc(r.Description) + '</div></details>' : '';
+  var h = r.SPPProductHook ? '<details class="collapse"' + (cardDetailsOpen(page) ? ' open' : '') + '><summary>SPP angle</summary><div class="card-hook" style="margin-bottom:8px;">' + esc(r.SPPProductHook) + '</div></details>' : '';
+  if (!d && !h) return '';
+  return '<div class="detail-pair">' + d + h + '</div>';
 }
 function statusOf(r) {
   if (r.RejectedBy) return 'rejected';
@@ -1194,7 +1214,7 @@ function cardHTML(r, page) {
     (parseInt(r.BTMatchCount || '0', 10) > 1 ? '<div id="bt-inline-' + r.Id + '"><button class="btn-sm ghost" style="width:100%;" onclick="loadBTInline(' + r.Id + ')">View all ' + parseInt(r.BTMatchCount, 10) + ' possible BT matches</button></div>' : '') +
     detailBits(r, page) +
     (r.WebsiteURL ? '<a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">&#128279; ' + esc(hostOf(r.WebsiteURL)) + '</a>' : '') +
-    actions + qualityRow(r) + '</div>';
+    '<div class="card-spacer"></div>' + actions + qualityRow(r) + '</div>';
 }
 
 /* ---------------- confirm / reason dialog ---------------- */
