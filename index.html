@@ -5,7 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SPP Lead Generator</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
+<script>
+var PREVIEW_MODE = /[?&#]preview/.test(window.location.href);
+if (!PREVIEW_MODE) {
+  document.write('<scr'+'ipt src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"><\/scr'+'ipt>');
+}
+</script>
 <style>
   :root {
     /* SPP brand: forest green + rust, from the company logo */
@@ -362,6 +367,32 @@
   .bt-match-head { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; padding: 9px 12px; background: var(--bg); font-family: 'Outfit', sans-serif; font-size: 12.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-3); }
   .modal-loading { display: flex; align-items: center; gap: 10px; color: var(--text-3); font-size: 15px; padding: 14px 0; }
   .modal-loading .mini-spin { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .edit-overlay { display: none; position: fixed; inset: 0; background: rgba(13,37,69,0.55); z-index: 300; align-items: center; justify-content: center; padding: 40px 18px; }
+  .edit-overlay.open { display: flex; }
+  .edit-modal { background: var(--card); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); max-width: 480px; width: 100%; padding: 24px 28px; animation: fadeIn 0.18s ease; }
+  .edit-modal-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .edit-modal-title { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; color: var(--navy); }
+  .edit-modal-sub { font-size: 13px; color: var(--text-3); margin-bottom: 16px; }
+  .ecf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ecf-field label { display: block; font-size: 11px; font-weight: 600; color: var(--gold); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .ecf-field input { width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Lexend', sans-serif; font-size: 15px; color: var(--text-1); background: var(--card); transition: border-color var(--transition); }
+  .ecf-field input:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 2px rgba(0,120,53,0.12); }
+  .ecf-full { grid-column: span 2; }
+  .ecf-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .edit-contact-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--navy); cursor: pointer; background: none; border: 1px solid var(--navy); border-radius: var(--radius-sm); padding: 3px 10px; font-family: 'Lexend', sans-serif; font-weight: 500; transition: var(--transition); }
+  .edit-contact-btn:hover { background: var(--green-bg); }
+  .create-lead-form .clf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .create-lead-form .clf-field label { display: block; font-size: 11px; font-weight: 600; color: var(--gold); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .create-lead-form .clf-field label .req { color: var(--red); }
+  .create-lead-form .clf-field input, .create-lead-form .clf-field textarea, .create-lead-form .clf-field select { width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Lexend', sans-serif; font-size: 15px; color: var(--text-1); background: var(--card); transition: border-color var(--transition); }
+  .create-lead-form .clf-field input:focus, .create-lead-form .clf-field textarea:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 2px rgba(0,120,53,0.12); }
+  .create-lead-form .clf-field textarea { resize: vertical; min-height: 60px; }
+  .create-lead-form .clf-full { grid-column: span 2; }
+  .create-lead-form .clf-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .create-lead-form .clf-section { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--navy); margin-top: 14px; margin-bottom: 6px; padding-top: 10px; border-top: 1px solid var(--border); grid-column: span 2; }
+  .create-lead-form .clf-section:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+  .dup-warning { background: var(--amber-bg); border: 1px solid var(--amber-bd); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 14px; font-size: 13px; color: var(--amber); }
+  .dup-warning strong { font-weight: 600; }
 
   /* ---- TOAST ---- */
   .toast {
@@ -484,6 +515,14 @@
     <div class="signin-error" id="signin-error"></div>
   </div>
 </div>
+
+<script>
+// In preview mode, skip the sign-in screen immediately
+if (typeof PREVIEW_MODE !== 'undefined' && PREVIEW_MODE) {
+  document.getElementById('screen-signin').classList.remove('active');
+  document.getElementById('screen-signin').style.display = 'none';
+}
+</script>
 
 <!-- ======== APP (hidden until signed in) ======== -->
 <div id="app-shell" style="display:none;">
@@ -647,6 +686,7 @@
           <button class="btn-sm ghost details-toggle" data-page="claimed" onclick="toggleCardDetails('claimed')">Details</button>
           <button class="btn-sm ghost" onclick="exportReport()">Export</button>
           <button class="btn-sm ghost" onclick="openClaimed()">Refresh</button>
+          <button class="btn-sm" onclick="openCreateLead()">+ Add a lead</button>
         </div>
       </div>
       <div class="lead-table" id="claimed-table"></div>
@@ -668,6 +708,7 @@
         </div>
         <div class="results-actions">
           <button class="btn-sm ghost details-toggle" data-page="tbc" onclick="toggleCardDetails('tbc')">Details</button>
+          <button class="btn-sm ghost" onclick="exportReport('tbc')">Export</button>
           <button class="btn-sm ghost" onclick="openTBC(tbcMode)">Refresh</button>
         </div>
       </div>
@@ -715,6 +756,29 @@
 </div>
 
 <!-- ======== CONFIRM / REASON DIALOG ======== -->
+<div class="edit-overlay" id="edit-overlay" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-modal">
+    <div class="edit-modal-top">
+      <div class="edit-modal-title" id="edit-modal-title"></div>
+      <button class="modal-close" onclick="closeEditModal()">&#10005;</button>
+    </div>
+    <div class="edit-modal-sub" id="edit-modal-sub"></div>
+    <div id="edit-modal-body"></div>
+  </div>
+</div>
+
+<div class="edit-overlay" id="create-lead-overlay" onclick="if(event.target===this)closeCreateLead()">
+  <div class="edit-modal" style="max-width:560px;">
+    <div class="edit-modal-top">
+      <div class="edit-modal-title">Add a lead</div>
+      <button class="modal-close" onclick="closeCreateLead()">&#10005;</button>
+    </div>
+    <div class="edit-modal-sub">Add a company you have found elsewhere. It will be checked for duplicates and claimed to you.</div>
+    <div id="create-lead-dup" style="display:none;"></div>
+    <div id="create-lead-body" class="create-lead-form"></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="dialog-overlay">
   <div class="modal" style="max-width:440px;">
     <div class="modal-title" id="dialog-title" style="font-size:18px;"></div>
@@ -759,6 +823,18 @@ const CONFIG = {
   POLL_MAX_MS: 330000,     // give up watching after 5.5 minutes
   STABLE_POLLS: 2          // result count unchanged this many polls = search finished
 };
+
+/* ---------------- preview / demo mode ---------------- */
+var PREVIEW = (typeof PREVIEW_MODE !== 'undefined' && PREVIEW_MODE) || /[?&#]preview/.test(window.location.href);
+if (PREVIEW) {
+  var DEMO_LEADS = [
+    { Id:1, Title:'Acme Joinery Ltd', Location:'Manchester', Sector:'Joinery & Shopfitting', Description:'Large commercial joinery firm specialising in retail and hospitality fit-outs across the North West. Operates a 25,000 sq ft workshop with CNC capability.', SPPProductHook:'High user of birch plywood for shopfitting carcasses and display units. Contra-Burn treated boards for hotel and restaurant projects.', WebsiteURL:'https://www.example-acme.co.uk', EmailDomain:'example-acme.co.uk', ContactName:'James Wilson', ContactRole:'Purchasing Manager', PhoneNumber:'0161 234 5678', CompanyPhoneNumber:'0161 200 1000', ContactEmail:'james.wilson@example-acme.co.uk', BTMatch:'None', BTMatchCount:'0', Industry:'Joinery & Shopfitting', ProductRange:'Birch Plywood', Region:'North West', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', confidence_score:82 },
+    { Id:2, Title:'Northern Stage Sets', Location:'Leeds', Sector:'Set Building & Events', Description:'Theatrical and event set builders working with major venues across Yorkshire. Known for large-scale temporary structures and exhibition stands.', SPPProductHook:'Pine plywood for lightweight scenic flats and temporary structures. Contra-Burn essential for public venue fire compliance.', WebsiteURL:'https://www.example-northern.co.uk', EmailDomain:'example-northern.co.uk', ContactName:'Sarah Patel', ContactRole:'Operations Director', PhoneNumber:'0113 987 6543', CompanyPhoneNumber:'0113 987 0000', ContactEmail:'sarah@example-northern.co.uk', BTMatch:'Possible', BTMatchCount:'1', BTStatus:'Active', BTRep:'John Smith', Industry:'Set Building & Events', ProductRange:'Pine Plywood', Region:'Yorkshire', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'Good', confidence_score:75 },
+    { Id:3, Title:'Precision Pods Manufacturing', Location:'Birmingham', Sector:'Modular Construction', Description:'Off-site modular bathroom and kitchen pod manufacturer supplying major housebuilders. ISO 9001 certified with capacity for 50 pods per week.', SPPProductHook:'Phenol-faced boards for moisture-resistant pod flooring and wall linings. Birch ply for structural elements.', WebsiteURL:'https://www.example-pods.co.uk', EmailDomain:'example-pods.co.uk', ContactName:'', ContactRole:'', PhoneNumber:'0121 456 7890', CompanyPhoneNumber:'0121 456 0000', ContactEmail:'', BTMatch:'None', BTMatchCount:'0', Industry:'Modular Construction', ProductRange:'Phenol Faced Boards', Region:'West Midlands', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', confidence_score:88 },
+    { Id:4, Title:'Heritage Boat Builders', Location:'Southampton', Sector:'Marine & Boatbuilding', Description:'Specialist wooden boat restoration and new-build yard. Works with classic yacht owners and heritage trusts on vessels up to 60ft.', SPPProductHook:'Marine-grade birch plywood for hull linings, bulkheads and cabin furniture. Veneered panels for interior finishing.', WebsiteURL:'https://www.example-boats.co.uk', EmailDomain:'example-boats.co.uk', ContactName:'David Chen', ContactRole:'Yard Manager', PhoneNumber:'', CompanyPhoneNumber:'023 8045 6789', ContactEmail:'david.chen@example-boats.co.uk', BTMatch:'Confirmed', BTMatchCount:'1', BTStatus:'Active', BTRep:'Richard Claridge', BTLastNote:'Good account, orders quarterly', Industry:'Marine & Boatbuilding', ProductRange:'Birch Plywood', Region:'South East', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', ClaimedBy:'demo@spp.co.uk', ClaimedDate:new Date().toISOString(), confidence_score:71 },
+    { Id:5, Title:'Greenfield Acoustics', Location:'Bristol', Sector:'Acoustic Solutions', Description:'Designs and installs acoustic wall and ceiling panels for offices, studios and educational buildings. Growing fast with recent contracts for university lecture halls.', SPPProductHook:'Birch plywood as substrate for perforated acoustic panels. Contra-Burn treated boards for education sector fire compliance.', WebsiteURL:'https://www.example-acoustics.co.uk', EmailDomain:'example-acoustics.co.uk', ContactName:'Emma Brooks', ContactRole:'Technical Director', PhoneNumber:'0117 321 0000', CompanyPhoneNumber:'0117 321 0001', ContactEmail:'emma@example-acoustics.co.uk', BTMatch:'None', BTMatchCount:'0', Industry:'Acoustic Solutions', ProductRange:'Birch Plywood', Region:'South West', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', TBCBy:'demo@spp.co.uk', confidence_score:79 }
+  ];
+}
 
 /* ---------------- state ---------------- */
 let msalInstance = null;
@@ -814,6 +890,15 @@ function toast(msg, isError) {
 
 /* ---------------- auth ---------------- */
 function initMsal() {
+  if (PREVIEW) {
+    ME = { email: 'demo@spp.co.uk', name: 'Preview User' };
+    account = { username: 'demo@spp.co.uk', name: 'Preview User' };
+    var ss = document.getElementById('screen-signin');
+    if (ss) { ss.classList.remove('active'); ss.style.display = 'none'; }
+    document.getElementById('app-shell').style.display = 'block';
+    try { bootApp(); } catch(e) { console.error('Preview bootApp error:', e); }
+    return;
+  }
   msalInstance = new msal.PublicClientApplication({
     auth: {
       clientId: CONFIG.CLIENT_ID,
@@ -826,6 +911,7 @@ function initMsal() {
   if (accounts.length > 0) { account = accounts[0]; onSignedIn(); }
 }
 async function signIn() {
+  if (PREVIEW) { initMsal(); return; }
   const errBox = document.getElementById('signin-error');
   errBox.style.display = 'none';
   try {
@@ -861,6 +947,7 @@ function onSignedIn() {
 
 /* ---------------- API ---------------- */
 async function api(target, payload) {
+  if (PREVIEW) return previewApi(target, payload);
   const token = await getToken();
   const res = await fetch(CONFIG.PROXY, {
     method: 'POST',
@@ -872,6 +959,83 @@ async function api(target, payload) {
   if (!res.ok) throw new Error((data && (data.error || data.message)) || ('HTTP ' + res.status));
   if (data && data.error) throw new Error(data.error);
   return data;
+}
+function previewApi(target, payload) {
+  var p = payload || {};
+  var action = p.action || '';
+  // Dropdown options for boot
+  if (action === 'getDropdowns') {
+    return { value: [
+      { Title:'Joinery & Shopfitting', OptionType:'Industry', IsActive:'Yes', SortOrder:1 },
+      { Title:'Set Building & Events', OptionType:'Industry', IsActive:'Yes', SortOrder:2 },
+      { Title:'Modular Construction', OptionType:'Industry', IsActive:'Yes', SortOrder:3 },
+      { Title:'Marine & Boatbuilding', OptionType:'Industry', IsActive:'Yes', SortOrder:4 },
+      { Title:'Acoustic Solutions', OptionType:'Industry', IsActive:'Yes', SortOrder:5 },
+      { Title:'Birch Plywood', OptionType:'ProductRange', IsActive:'Yes', SortOrder:1 },
+      { Title:'Pine Plywood', OptionType:'ProductRange', IsActive:'Yes', SortOrder:2 },
+      { Title:'Phenol Faced Boards', OptionType:'ProductRange', IsActive:'Yes', SortOrder:3 },
+      { Title:'Veneered Panels', OptionType:'ProductRange', IsActive:'Yes', SortOrder:4 },
+      { Title:'Contra-Burn', OptionType:'ProductRange', IsActive:'Yes', SortOrder:5 },
+      { Title:'North West', OptionType:'Region', IsActive:'Yes', SortOrder:1 },
+      { Title:'Yorkshire', OptionType:'Region', IsActive:'Yes', SortOrder:2 },
+      { Title:'West Midlands', OptionType:'Region', IsActive:'Yes', SortOrder:3 },
+      { Title:'South East', OptionType:'Region', IsActive:'Yes', SortOrder:4 },
+      { Title:'South West', OptionType:'Region', IsActive:'Yes', SortOrder:5 },
+      { Title:'London', OptionType:'Region', IsActive:'Yes', SortOrder:6 },
+      { Title:'Scotland', OptionType:'Region', IsActive:'Yes', SortOrder:7 },
+      { Title:'UK - National (any location)', OptionType:'Region', IsActive:'Yes', SortOrder:8 },
+      { Title:'Too small', OptionType:'RejectReason', IsActive:'Yes', SortOrder:1 },
+      { Title:'Does not buy our products', OptionType:'RejectReason', IsActive:'Yes', SortOrder:2 },
+      { Title:'Closed', OptionType:'RejectReason', IsActive:'Yes', SortOrder:3 },
+      { Title:'demo@spp.co.uk|Preview User', OptionType:'UserDisplay' },
+      { Title:'richard@spp.co.uk|Richard Claridge', OptionType:'UserDisplay' }
+    ]};
+  }
+  // Home stats
+  if (action === 'getMyStats') {
+    return { value: [{ ClaimedCount: 1, TBCCount: 1 }] };
+  }
+  if (action === 'getTBCCount') {
+    return { value: [{ TBCTotal: 3 }] };
+  }
+  // Recent searches for home sidebar
+  if (action === 'getRecentLeads' || action === 'getRecentSearches') {
+    return { value: DEMO_LEADS };
+  }
+  // Leads for a session
+  if (action === 'getLeads') {
+    return { value: DEMO_LEADS.filter(function(r) { return !r.ClaimedBy && !r.RejectedBy && !r.TBCBy; }) };
+  }
+  // Claimed leads
+  if (action === 'getClaimed') {
+    return { value: DEMO_LEADS.filter(function(r) { return r.ClaimedBy; }) };
+  }
+  // TBC leads
+  if (action === 'getTBC') {
+    return { value: DEMO_LEADS.filter(function(r) { return r.TBCBy; }) };
+  }
+  // Actions (claim, reject, tbc, etc) - just toast and no-op
+  if (action === 'checkDuplicate') {
+    var cn = (p.companyName || '').toLowerCase();
+    var cw = normaliseUrl(p.websiteUrl || '');
+    var matches = DEMO_LEADS.filter(function(d) {
+      return d.Title.toLowerCase() === cn || normaliseUrl(d.WebsiteURL) === cw;
+    });
+    return { value: matches };
+  }
+  if (action === 'createLead') {
+    var nl = Object.assign({ Id: 900 + DEMO_LEADS.length }, p.fields || {});
+    DEMO_LEADS.push(nl);
+    return { ok: true };
+  }
+  if (action === 'claimLead' || action === 'rejectLead' || action === 'tbcLead' || action === 'unclaimLead' || action === 'updateLead' || action === 'addNote') {
+    return { ok: true };
+  }
+  // Generate / similar - return a fake session ID
+  if (target === 'generate' || target === 'similar') {
+    return { sessionid: 'preview-session-' + Date.now() };
+  }
+  return {};
 }
 const dataApi = (action, extra) => api('data', Object.assign({ action: action }, extra || {}));
 
@@ -1292,6 +1456,7 @@ function cardHTML(r, page) {
     detailBits(r, page) +
     (r.WebsiteURL ? '<a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">&#128279; ' + esc(hostOf(r.WebsiteURL)) + '</a>' : '') +
     (r.PhoneNumber ? '<a class="card-url" href="tel:' + esc(String(r.PhoneNumber).replace(/\s+/g, '')) + '">&#128222; ' + esc(r.PhoneNumber) + '</a>' : '') +
+    (r.ContactEmail ? '<a class="card-url" href="mailto:' + esc(r.ContactEmail) + '">&#9993; ' + esc(r.ContactEmail) + '</a>' : '') +
     '<div class="card-spacer"></div>' + actions + qualityRow(r) + '</div>';
 }
 
@@ -1306,6 +1471,13 @@ function showDialog(opts) {
     if (opts.select) {
       extra.innerHTML = '<select class="form-select" id="dialog-select">' +
         opts.select.map(o => '<option value="' + esc(o) + '">' + esc(o) + '</option>').join('') + '</select>';
+    } else if (opts.checkGroups) {
+      extra.innerHTML = opts.checkGroups.map(function(g) {
+        return '<div style="margin-bottom:10px;"><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--gold);margin-bottom:4px;border-bottom:1px solid var(--border);padding-bottom:3px;">' + esc(g.heading) + '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">' + g.checks.map(function(c) {
+            return '<label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;"><input type="checkbox" class="dlg-chk" value="' + esc(c.value) + '"' + (c.checked ? ' checked' : '') + '> ' + esc(c.label) + '</label>';
+          }).join('') + '</div></div>';
+      }).join('');
     } else if (opts.checks) {
       extra.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">' + opts.checks.map(c =>
         '<label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;"><input type="checkbox" class="dlg-chk" value="' + esc(c.value) + '"' + (c.checked ? ' checked' : '') + '> ' + esc(c.label) + '</label>').join('') + '</div>';
@@ -1452,20 +1624,26 @@ function renderClaimed() {
     '<button class="btn-unclaim" style="color:var(--amber);border-color:var(--amber-bd);" onclick="rejectLead(' + r.Id + ')">Reject</button></div></div>'
   ).join('');
 }
-const EXPORT_FIELDS = [
-  ['Title', 'Company'], ['Location', 'Location'], ['Sector', 'Sector'], ['Description', 'Description'],
-  ['SPPProductHook', 'SPP angle'], ['WebsiteURL', 'Website'], ['EmailDomain', 'Email domain'],
-  ['ContactName', 'Contact'], ['Industry', 'Industry'], ['ProductRange', 'Product range'], ['Region', 'Region'],
-  ['ClaimedDate', 'Claimed date'], ['QualityRating', 'Quality'], ['LeadNotes', 'Notes']
+const EXPORT_GROUPS = [
+  { heading: 'Company', fields: [['Title', 'Company name'], ['Location', 'Location'], ['Sector', 'Sector'], ['Industry', 'Industry'], ['Description', 'Description'], ['WebsiteURL', 'Website'], ['EmailDomain', 'Email domain'], ['CompanyPhoneNumber', 'Company phone']] },
+  { heading: 'Contact', fields: [['ContactName', 'Contact name'], ['ContactRole', 'Contact role'], ['PhoneNumber', 'Contact phone'], ['ContactEmail', 'Email address']] },
+  { heading: 'SPP', fields: [['SPPProductHook', 'SPP angle'], ['ProductRange', 'Product range']] },
+  { heading: 'Lead info', fields: [['Region', 'Region'], ['ClaimedDate', 'Claimed date'], ['QualityRating', 'Quality'], ['LeadNotes', 'Notes']] },
+  { heading: 'Print options', fields: [['_NoteSpace', 'Note space']] }
 ];
-async function exportReport() {
-  if (!claimedRows.length) { toast('Nothing to export.', true); return; }
+const EXPORT_FIELDS = EXPORT_GROUPS.reduce(function(a, g) { return a.concat(g.fields); }, []);
+async function exportReport(source) {
+  var rows = source === 'tbc' ? tbcRows.filter(function(r) { return !r.ClaimedBy && !r.RejectedBy; }) : claimedRows;
+  var label = source === 'tbc' ? 'TBC' : 'claimed';
+  if (!rows.length) { toast('Nothing to export.', true); return; }
   let saved = [];
   try { saved = JSON.parse(localStorage.getItem('spp-export-fields') || '[]'); } catch (e) {}
   const picked = await showDialog({
-    title: 'Export claimed leads',
+    title: 'Export ' + label + ' leads',
     message: 'Choose the fields to include, then a print-ready report opens in a new tab (Ctrl+P to save as PDF).',
-    checks: EXPORT_FIELDS.map(f => ({ value: f[0], label: f[1], checked: saved.length ? saved.includes(f[0]) : true })),
+    checkGroups: EXPORT_GROUPS.map(function(g) {
+      return { heading: g.heading, checks: g.fields.map(function(f) { return { value: f[0], label: f[1], checked: saved.length ? saved.includes(f[0]) : true }; }) };
+    }),
     confirmLabel: 'Create report', danger: false
   });
   if (!picked || !picked.length) return;
@@ -1473,30 +1651,36 @@ async function exportReport() {
   const fields = EXPORT_FIELDS.filter(f => picked.includes(f[0]));
   const w = window.open('', '_blank');
   if (!w) { toast('Pop-up blocked - allow pop-ups for this site.', true); return; }
-  const rowsHtml = claimedRows.map(r =>
-    '<div class="lead"><h2>' + esc(r.Title) + '</h2><table>' +
-    fields.filter(f => f[0] !== 'Title' && r[f[0]]).map(f =>
-      '<tr><th>' + esc(f[1]) + '</th><td>' + (f[0] === 'ClaimedDate' ? fmtDate(r[f[0]]) : esc(r[f[0]])) + '</td></tr>').join('') +
-    '</table></div>').join('');
+  var showNoteSpace = fields.some(function(f) { return f[0] === '_NoteSpace'; });
+  var dataFields = fields.filter(function(f) { return f[0] !== '_NoteSpace'; });
+  const rowsHtml = rows.map(r =>
+    '<div class="lead' + (showNoteSpace ? ' lead-with-notes' : '') + '"><div class="lead-content"><h2>' + esc(r.Title) + '</h2><table>' +
+    dataFields.filter(f => f[0] !== 'Title' && r[f[0]]).map(f =>
+      '<tr><th>' + esc(f[1]) + '</th><td>' + (f[0] === 'ClaimedDate' ? fmtDate(r[f[0]]) : f[0] === 'PhoneNumber' ? esc(r[f[0]]) : esc(r[f[0]])) + '</td></tr>').join('') +
+    '</table></div>' + (showNoteSpace ? '<div class="note-space"><div class="note-space-label">Notes</div></div>' : '') + '</div>').join('');
   w.document.write('<!DOCTYPE html><html><head><title>SPP Claimed Leads - ' + esc(displayName(ME.email)) + '</title><style>' +
     'body{font-family:Segoe UI,Arial,sans-serif;color:#14301d;margin:40px;max-width:900px;}' +
     'h1{color:#007835;font-size:22px;border-bottom:3px solid #a43f17;padding-bottom:8px;}' +
     '.meta{color:#666;font-size:12px;margin-bottom:24px;}' +
     '.lead{page-break-inside:avoid;border:1px solid #d9e2d9;border-radius:10px;padding:16px 20px;margin-bottom:16px;}' +
+    '.lead-with-notes{display:grid;grid-template-columns:1fr 280px;gap:0;}' +
+    '.lead-content{padding-right:16px;}' +
+    '.note-space{border-left:1px solid #d9e2d9;padding:8px 14px;min-height:120px;}' +
+    '.note-space-label{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#a43f17;font-weight:700;margin-bottom:4px;}' + +
     'h2{color:#007835;font-size:16px;margin:0 0 10px;}' +
     'table{border-collapse:collapse;width:100%;}' +
     'th{text-align:left;vertical-align:top;color:#a43f17;font-size:11px;text-transform:uppercase;padding:4px 14px 4px 0;width:120px;}' +
     'td{font-size:13px;padding:4px 0;white-space:pre-wrap;}' +
     '@media print{.noprint{display:none;}}' +
     '</style></head><body>' +
-    '<h1>SPP Claimed Leads</h1><div class="meta">' + esc(displayName(ME.email)) + ' &middot; ' + new Date().toLocaleDateString('en-GB') + ' &middot; ' + claimedRows.length + ' leads</div>' +
+    '<h1>SPP ' + label.charAt(0).toUpperCase() + label.slice(1) + ' Leads</h1><div class="meta">' + esc(displayName(ME.email)) + ' &middot; ' + new Date().toLocaleDateString('en-GB') + ' &middot; ' + rows.length + ' leads</div>' +
     '<button class="noprint" style="margin-bottom:18px;padding:8px 16px;cursor:pointer;" onclick="window.print()">Print / Save as PDF</button>' +
     rowsHtml + '</body></html>');
   w.document.close();
 }
 function exportClaimedCSV() {
   if (!claimedRows.length) { toast('Nothing to export.', true); return; }
-  const cols = ['Title', 'Location', 'Sector', 'WebsiteURL', 'EmailDomain', 'ContactName', 'ContactRole', 'Industry', 'ProductRange', 'Region', 'ClaimedDate', 'QualityRating', 'SPPProductHook'];
+  const cols = ['Title', 'Location', 'Sector', 'WebsiteURL', 'EmailDomain', 'ContactName', 'ContactRole', 'PhoneNumber', 'CompanyPhoneNumber', 'ContactEmail', 'Industry', 'ProductRange', 'Region', 'ClaimedDate', 'QualityRating', 'SPPProductHook'];
   const escCSV = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
   const csv = [cols.join(',')].concat(claimedRows.map(r => cols.map(c => escCSV(r[c])).join(','))).join('\r\n');
   const a = document.createElement('a');
@@ -1595,11 +1779,13 @@ function openLeadModal(id, withNotes) {
     (r.WebsiteURL ? 'Website: <a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">' + esc(r.WebsiteURL) + '</a><br>' : '') +
     (r.EmailDomain ? 'Email domain: ' + esc(r.EmailDomain) + '<br>' : '') +
     (r.ContactName ? 'Contact: ' + esc(r.ContactName) + (r.ContactRole ? ' (' + esc(r.ContactRole) + ')' : '') + '<br>' : '') +
-    (r.PhoneNumber ? 'Phone: <a class="card-url" href="tel:' + esc(String(r.PhoneNumber).replace(/\s+/g, '')) + '">' + esc(r.PhoneNumber) + '</a><br>' : '') +
+    (r.PhoneNumber ? 'Phone (contact): <a class="card-url" href="tel:' + esc(String(r.PhoneNumber).replace(/\s+/g, '')) + '">' + esc(r.PhoneNumber) + '</a><br>' : '') +
+    (r.CompanyPhoneNumber ? 'Phone (company): <a class="card-url" href="tel:' + esc(String(r.CompanyPhoneNumber).replace(/\s+/g, '')) + '">' + esc(r.CompanyPhoneNumber) + '</a><br>' : '') +
+    (r.ContactEmail ? 'Email: <a class="card-url" href="mailto:' + esc(r.ContactEmail) + '">' + esc(r.ContactEmail) + '</a><br>' : '') +
     'Generated ' + fmtDate(r.GeneratedDate) + ' by ' + esc(displayName(r.GeneratedBy)) +
     (r.ClaimedBy ? '<br>Claimed by ' + esc(displayName(r.ClaimedBy)) + ' on ' + fmtDate(r.ClaimedDate) : '') +
     (r.RejectReason ? '<br>Rejected: ' + esc(r.RejectReason) : '') +
-    '</div></div>' +
+    '</div>' + editContactBtn(r) + '</div>' +
     btInfo(r) +
     (count >= 1 ? '<div class="modal-section"><h4>BT customer records</h4><div id="bt-panel"><button class="btn-sm ghost" onclick="loadBTMatches(' + r.Id + ')">Load ' + (count > 1 ? 'all ' + count + ' matching records' : 'matching record') + '</button></div></div>' : '');
   if (withNotes) {
@@ -1614,6 +1800,173 @@ function openLeadModal(id, withNotes) {
     document.getElementById('modal-body').innerHTML = detail;
   }
   document.getElementById('modal-overlay').classList.add('open');
+}
+function canEditContact(r) {
+  if (!ME || !ME.email) return false;
+  var me = ME.email.toLowerCase();
+  if (r.ClaimedBy && String(r.ClaimedBy).toLowerCase() === me) return true;
+  if (r.TBCBy && String(r.TBCBy).toLowerCase() === me) return true;
+  return false;
+}
+function editContactBtn(r) {
+  if (!canEditContact(r)) return '';
+  return '<div style="margin-top:10px;"><button class="edit-contact-btn" onclick="openEditContact(' + r.Id + ')">&#9998; Edit contact details</button></div>';
+}
+var editLeadId = null;
+function openEditContact(id) {
+  var r = findRow(id);
+  if (!r || !canEditContact(r)) return;
+  editLeadId = id;
+  document.getElementById('edit-modal-title').textContent = 'Edit contact details';
+  document.getElementById('edit-modal-sub').textContent = r.Title;
+  document.getElementById('edit-modal-body').innerHTML =
+    '<div class="ecf-grid">' +
+    '<div class="ecf-field"><label>Contact name</label><input id="ecf-name" value="' + esc(r.ContactName || '') + '"></div>' +
+    '<div class="ecf-field"><label>Contact role</label><input id="ecf-role" value="' + esc(r.ContactRole || '') + '"></div>' +
+    '<div class="ecf-field"><label>Contact phone</label><input id="ecf-phone" value="' + esc(r.PhoneNumber || '') + '"></div>' +
+    '<div class="ecf-field"><label>Email address</label><input id="ecf-email" value="' + esc(r.ContactEmail || '') + '"></div>' +
+    '<div class="ecf-field ecf-full"><label>Company phone</label><input id="ecf-cophone" value="' + esc(r.CompanyPhoneNumber || '') + '"></div>' +
+    '</div>' +
+    '<div class="ecf-actions">' +
+    '<button class="btn-sm ghost" onclick="closeEditModal()">Cancel</button>' +
+    '<button class="btn-sm" id="ecf-save-btn" onclick="saveContactEdits(' + r.Id + ')">Save changes</button>' +
+    '</div>';
+  document.getElementById('edit-overlay').classList.add('open');
+}
+function closeEditModal() {
+  document.getElementById('edit-overlay').classList.remove('open');
+  editLeadId = null;
+}
+async function saveContactEdits(id) {
+  var fields = {
+    ContactName: document.getElementById('ecf-name').value.trim(),
+    ContactRole: document.getElementById('ecf-role').value.trim(),
+    PhoneNumber: document.getElementById('ecf-phone').value.trim(),
+    ContactEmail: document.getElementById('ecf-email').value.trim(),
+    CompanyPhoneNumber: document.getElementById('ecf-cophone').value.trim()
+  };
+  var btn = document.getElementById('ecf-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  try {
+    await dataApi('update', { itemId: String(id), fields: fields });
+    var row = findRow(id);
+    if (row) Object.assign(row, fields);
+    closeEditModal();
+    var withNotes = document.querySelector('#modal-overlay .modal').classList.contains('with-notes');
+    openLeadModal(id, withNotes);
+    renderResults();
+    if (document.getElementById('screen-tbc').classList.contains('active')) renderTBC();
+    if (document.getElementById('screen-claimed').classList.contains('active')) renderClaimed();
+    toast('Contact details updated.');
+  } catch(e) {
+    toast('Save failed: ' + e.message, true);
+    var btn2 = document.getElementById('ecf-save-btn');
+    if (btn2) { btn2.disabled = false; btn2.textContent = 'Save changes'; }
+  }
+}
+function normaliseUrl(u) {
+  if (!u) return '';
+  u = u.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '');
+  return u;
+}
+function openCreateLead() {
+  document.getElementById('create-lead-dup').style.display = 'none';
+  document.getElementById('create-lead-dup').innerHTML = '';
+  var indOpts = (dropdowns.Industry || []).map(function(o) { return '<option value="' + esc(o.Title) + '">' + esc(o.Title) + '</option>'; }).join('');
+  var prOpts = (dropdowns.ProductRange || []).map(function(o) { return '<option value="' + esc(o.Title) + '">' + esc(o.Title) + '</option>'; }).join('');
+  var regOpts = (dropdowns.Region || []).map(function(o) { return '<option value="' + esc(o.Title) + '">' + esc(o.Title) + '</option>'; }).join('');
+  document.getElementById('create-lead-body').innerHTML =
+    '<div class="clf-grid">' +
+    '<div class="clf-section">Company</div>' +
+    '<div class="clf-field clf-full"><label>Company name <span class="req">*</span></label><input id="clf-name" placeholder="e.g. Acme Joinery Ltd"></div>' +
+    '<div class="clf-field"><label>Website <span class="req">*</span></label><input id="clf-web" placeholder="e.g. www.acme.co.uk"></div>' +
+    '<div class="clf-field"><label>Company phone <span class="req">*</span></label><input id="clf-cophone" placeholder="e.g. 0161 234 5678"></div>' +
+    '<div class="clf-field"><label>Location</label><input id="clf-loc" placeholder="e.g. Manchester"></div>' +
+    '<div class="clf-field"><label>Sector</label><input id="clf-sector" placeholder="e.g. Joinery & Shopfitting"></div>' +
+    '<div class="clf-field"><label>Industry</label><select id="clf-industry"><option value="">-- Select --</option>' + indOpts + '</select></div>' +
+    '<div class="clf-field"><label>Region</label><select id="clf-region"><option value="">-- Select --</option>' + regOpts + '</select></div>' +
+    '<div class="clf-field clf-full"><label>Description</label><textarea id="clf-desc" placeholder="Brief description of what this company does..."></textarea></div>' +
+    '<div class="clf-section">Contact</div>' +
+    '<div class="clf-field"><label>Contact name</label><input id="clf-contact" placeholder="e.g. John Smith"></div>' +
+    '<div class="clf-field"><label>Contact role</label><input id="clf-role" placeholder="e.g. Purchasing Manager"></div>' +
+    '<div class="clf-field"><label>Contact phone</label><input id="clf-phone" placeholder="Direct dial or mobile"></div>' +
+    '<div class="clf-field"><label>Email address</label><input id="clf-email" placeholder="e.g. john@acme.co.uk"></div>' +
+    '<div class="clf-section">SPP</div>' +
+    '<div class="clf-field"><label>Product range</label><select id="clf-product"><option value="">-- Select --</option>' + prOpts + '</select></div>' +
+    '<div class="clf-field clf-full"><label>SPP angle</label><textarea id="clf-hook" placeholder="Why is this company a good fit for SPP products?"></textarea></div>' +
+    '</div>' +
+    '<div class="clf-actions">' +
+    '<button class="btn-sm ghost" onclick="closeCreateLead()">Cancel</button>' +
+    '<button class="btn-sm" id="clf-save-btn" onclick="saveCreateLead()">Check &amp; save</button>' +
+    '</div>';
+  document.getElementById('create-lead-overlay').classList.add('open');
+}
+function closeCreateLead() {
+  document.getElementById('create-lead-overlay').classList.remove('open');
+}
+async function saveCreateLead() {
+  var name = (document.getElementById('clf-name').value || '').trim();
+  var web = (document.getElementById('clf-web').value || '').trim();
+  var cophone = (document.getElementById('clf-cophone').value || '').trim();
+  if (!name || !web || !cophone) { toast('Company name, website and company phone are required.', true); return; }
+  var btn = document.getElementById('clf-save-btn');
+  btn.disabled = true; btn.textContent = 'Checking...';
+  document.getElementById('create-lead-dup').style.display = 'none';
+  try {
+    var dupRes = await dataApi('checkDuplicate', { companyName: name, websiteUrl: web });
+    var dups = (dupRes && dupRes.value) || [];
+    if (dups.length > 0) {
+      var dupHtml = '<div class="dup-warning"><strong>Duplicate found \u2014 this lead already exists.</strong><br>';
+      dups.forEach(function(d) {
+        dupHtml += esc(d.Title);
+        if (d.ClaimedBy) dupHtml += ' \u2014 claimed by ' + esc(displayName(d.ClaimedBy));
+        else if (d.RejectedBy) dupHtml += ' \u2014 rejected by ' + esc(displayName(d.RejectedBy));
+        else if (d.TBCBy) dupHtml += ' \u2014 TBC by ' + esc(displayName(d.TBCBy));
+        else dupHtml += ' \u2014 unclaimed';
+        dupHtml += '<br>';
+      });
+      dupHtml += '</div>';
+      document.getElementById('create-lead-dup').innerHTML = dupHtml;
+      document.getElementById('create-lead-dup').style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Check & save';
+      return;
+    }
+    btn.textContent = 'Saving...';
+    var webUrl = web;
+    if (!/^https?:\/\//.test(webUrl)) webUrl = 'https://' + webUrl;
+    var emailDomain = normaliseUrl(web).replace(/\/.*$/, '');
+    var lead = {
+      Title: name,
+      WebsiteURL: webUrl,
+      CompanyPhoneNumber: cophone,
+      Location: (document.getElementById('clf-loc').value || '').trim(),
+      Sector: (document.getElementById('clf-sector').value || '').trim(),
+      Industry: document.getElementById('clf-industry').value || '',
+      Region: document.getElementById('clf-region').value || '',
+      Description: (document.getElementById('clf-desc').value || '').trim(),
+      ContactName: (document.getElementById('clf-contact').value || '').trim(),
+      ContactRole: (document.getElementById('clf-role').value || '').trim(),
+      PhoneNumber: (document.getElementById('clf-phone').value || '').trim(),
+      ContactEmail: (document.getElementById('clf-email').value || '').trim(),
+      ProductRange: document.getElementById('clf-product').value || '',
+      SPPProductHook: (document.getElementById('clf-hook').value || '').trim(),
+      EmailDomain: emailDomain,
+      ClaimedBy: ME.email,
+      ClaimedDate: nowISO(),
+      GeneratedBy: ME.email,
+      GeneratedDate: nowISO(),
+      SearchSession: 'manual-' + Date.now(),
+      URLStatus: 'Live',
+      confidence_score: 0
+    };
+    await dataApi('createLead', { fields: lead });
+    closeCreateLead();
+    toast('Lead added and claimed to you.');
+    openClaimed();
+  } catch(e) {
+    toast('Error: ' + e.message, true);
+    btn.disabled = false; btn.textContent = 'Check & save';
+  }
 }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 function openBTPanel(id) { openLeadModal(id); loadBTMatches(id); }
