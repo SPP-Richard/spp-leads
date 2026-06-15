@@ -1214,6 +1214,7 @@ function cardHTML(r, page) {
     (parseInt(r.BTMatchCount || '0', 10) > 1 ? '<div id="bt-inline-' + r.Id + '"><button class="btn-sm ghost" style="width:100%;" onclick="loadBTInline(' + r.Id + ')">View all ' + parseInt(r.BTMatchCount, 10) + ' possible BT matches</button></div>' : '') +
     detailBits(r, page) +
     (r.WebsiteURL ? '<a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">&#128279; ' + esc(hostOf(r.WebsiteURL)) + '</a>' : '') +
+    (r.PhoneNumber ? '<a class="card-url" href="tel:' + esc(String(r.PhoneNumber).replace(/\s+/g, '')) + '">&#128222; ' + esc(r.PhoneNumber) + '</a>' : '') +
     '<div class="card-spacer"></div>' + actions + qualityRow(r) + '</div>';
 }
 
@@ -1517,6 +1518,7 @@ function openLeadModal(id, withNotes) {
     (r.WebsiteURL ? 'Website: <a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">' + esc(r.WebsiteURL) + '</a><br>' : '') +
     (r.EmailDomain ? 'Email domain: ' + esc(r.EmailDomain) + '<br>' : '') +
     (r.ContactName ? 'Contact: ' + esc(r.ContactName) + (r.ContactRole ? ' (' + esc(r.ContactRole) + ')' : '') + '<br>' : '') +
+    (r.PhoneNumber ? 'Phone: <a class="card-url" href="tel:' + esc(String(r.PhoneNumber).replace(/\s+/g, '')) + '">' + esc(r.PhoneNumber) + '</a><br>' : '') +
     'Generated ' + fmtDate(r.GeneratedDate) + ' by ' + esc(displayName(r.GeneratedBy)) +
     (r.ClaimedBy ? '<br>Claimed by ' + esc(displayName(r.ClaimedBy)) + ' on ' + fmtDate(r.ClaimedDate) : '') +
     (r.RejectReason ? '<br>Rejected: ' + esc(r.RejectReason) : '') +
