@@ -1135,40 +1135,53 @@ function showMoreBtn(enabled) {
   btn.innerHTML = enabled ? '<span class="mini-spin"></span> Find More Leads' : '<span class="mini-spin"></span> Searching…';
 }
 
+var moreSearchRunning = false;
 async function searchMore() {
-  if (!lastSearchParams) return;
-  var btn = document.getElementById('btn-more');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="mini-spin"></span> Searching…';
+  if (!lastSearchParams || moreSearchRunning) return;
+  moreSearchRunning = true;
+  showMoreBtn(false);
+  var baseCount = sessionRows.length;
   try {
     var endpoint = lastSearchParams.type === 'similar' ? 'similar' : 'generate';
-    var payload = { text: lastSearchParams.text, text_1: lastSearchParams.text_1, text_2: lastSearchParams.text_2 };
+    var payload = { text: lastSearchParams.text, text_1: lastSearchParams.text_1, text_2: lastSearchParams.text_2, text_3: currentSession };
     var r = await api(endpoint, payload);
-    var moreSession = r.sessionid;
+    var lastCount = -1;
+    var stableFor = 0;
     var pollCount = 0;
-    var moreRows = [];
-    var moreTimer = setInterval(async function() {
-      pollCount++;
-      try {
-        var res = await dataApi('getLeads', { sessionId: moreSession });
-        moreRows = (res && res.value) || [];
-      } catch(e) {}
-      if (moreRows.length > 0 || pollCount > 45) {
-        clearInterval(moreTimer);
-        if (moreRows.length > 0) {
-          sessionRows = sessionRows.concat(moreRows);
-          renderResults();
-          toast(moreRows.length + ' more lead' + (moreRows.length === 1 ? '' : 's') + ' added.');
-        } else {
-          toast('No additional leads found this round.', true);
-        }
-        showMoreBtn(true);
-      }
-    }, CONFIG.POLL_MS);
+    await new Promise(function(resolve) {
+      var timer = setInterval(function() {
+        pollCount++;
+        dataApi('getLeads', { sessionId: currentSession }).then(function(res) {
+          var rows = (res && res.value) || [];
+          var count = rows.length;
+          if (count > baseCount && count === lastCount) {
+            stableFor++;
+          } else {
+            stableFor = 0;
+          }
+          lastCount = count;
+          if ((count > baseCount && stableFor >= CONFIG.STABLE_POLLS) || pollCount > 33) {
+            clearInterval(timer);
+            var added = count - baseCount;
+            sessionRows = rows;
+            renderResults();
+            if (added > 0) {
+              toast(added + ' more lead' + (added === 1 ? '' : 's') + ' added.');
+            } else {
+              toast('No additional leads found this round.', true);
+            }
+            resolve();
+          }
+        }).catch(function() {
+          if (pollCount > 33) { clearInterval(timer); toast('Search timed out.', true); resolve(); }
+        });
+      }, CONFIG.POLL_MS);
+    });
   } catch(e) {
     toast('Could not start search: ' + e.message, true);
-    showMoreBtn(true);
   }
+  moreSearchRunning = false;
+  showMoreBtn(true);
 }
 function renderResults() {
   const grid = document.getElementById('results-grid');
