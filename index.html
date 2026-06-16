@@ -1974,10 +1974,33 @@ function btTableHTML(rows) {
   return '<div class="bt-match-table"><div class="bt-match-head" style="grid-template-columns:2fr 0.9fr 1fr 1.2fr;"><div>Customer</div><div>Rep</div><div>Status</div><div>Phone</div></div>' +
     rows.map(m => '<div class="bt-match-row" style="grid-template-columns:2fr 0.9fr 1fr 1.2fr;"><div class="row-name">' + esc(m.Title) + '</div><div>' + esc(displayName(m.SalesRep || '')) + '</div><div>' + esc(m.CustomerStatus || '-') + '</div><div>' + (m.Telephone ? '<a class="card-url" href="tel:' + esc(String(m.Telephone).replace(/\s+/g, '')) + '">' + esc(m.Telephone) + '</a>' : '<span class="row-dim">-</span>') + '</div></div>').join('') + '</div>';
 }
+// Tokenise a company name the same way the GeneratesLeads flow does:
+// punctuation -> space, strip legal/joining words (lead only), drop a trailing
+// "s" on words of 4+ chars so plural/singular and possessives still match.
+const BT_STOPWORDS = ['limited','ltd','plc','llp','the','and','sons','co'];
+function btTokens(s, stripStopwords) {
+  let t = ' ' + String(s || '').toLowerCase() + ' ';
+  t = t.replace(/[.,&'"\/\-():;]/g, ' ').replace(/\s+/g, ' ').trim();
+  let arr = t.split(' ').filter(Boolean)
+    .map(function(w) { return (w.length >= 4 && w.charAt(w.length - 1) === 's') ? w.slice(0, -1) : w; });
+  if (stripStopwords) arr = arr.filter(function(w) { return BT_STOPWORDS.indexOf(w) === -1; });
+  return arr;
+}
 async function fetchBTRows(r) {
-  const cleaned = String(r.Title || '').toLowerCase().replace(/\bthe \b/g, '').replace(/ limited| ltd\.?| plc| & sons/g, '').trim();
-  const resp = await dataApi('searchBT', { domain: r.EmailDomain || '', name: cleaned.length >= 6 ? cleaned.substring(0, 8) : 'zzz-skip' });
-  return (resp && resp.value) || [];
+  const leadTokens = btTokens(r.Title, true);
+  if (!leadTokens.length) return [];
+  // Candidate fetch: ask the backend for names containing the lead's first
+  // distinctive word (broad net), then filter precisely on the client.
+  const key = leadTokens[0].length >= 3 ? leadTokens[0] : leadTokens.join(' ').substring(0, 8);
+  const resp = await dataApi('searchBT', { domain: r.EmailDomain || '', name: key || 'zzz-skip' });
+  const rows = (resp && resp.value) || [];
+  // Keep a BT row only if EVERY lead word is present in its name (whole word,
+  // plural-tolerant). This is the same rule as the flow, so the badge and the
+  // compare list agree.
+  return rows.filter(function(m) {
+    const titleTokens = btTokens(m.Title, false);
+    return leadTokens.every(function(t) { return titleTokens.indexOf(t) !== -1; });
+  });
 }
 async function loadBTMatches(id) {
   const r = findRow(id);
