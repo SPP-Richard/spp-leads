@@ -1707,12 +1707,12 @@ async function openTBC(mode) {
 function renderTBC() {
   let eligible = tbcRows.filter(r => !r.ClaimedBy && !r.RejectedBy);
   if (tbcMode === 'mine') eligible = eligible.filter(r => r.TBCBy && String(r.TBCBy).toLowerCase() === ME.email.toLowerCase());
+  else eligible = eligible.filter(r => !r.TBCBy);
   if (!tbcDisplayIds) tbcDisplayIds = new Set(eligible.map(r => r.Id));
   const open = tbcRows.filter(r => tbcDisplayIds.has(r.Id));
-  const tbcCount = open.filter(r => r.TBCBy).length;
   document.getElementById('tbc-sub').textContent = tbcMode === 'mine'
     ? open.length + ' lead' + (open.length === 1 ? '' : 's') + ' you marked TBC, newest first.'
-    : open.length + ' lead' + (open.length === 1 ? '' : 's') + ' awaiting a decision (' + tbcCount + ' marked TBC), newest first.';
+    : open.length + ' lead' + (open.length === 1 ? '' : 's') + ' awaiting a decision, newest first.';
   document.getElementById('tbc-empty').style.display = open.length ? 'none' : 'block';
   const grid = document.getElementById('tbc-grid');
   if (tbcMode === 'mine') {
