@@ -285,9 +285,9 @@ if (!PREVIEW_MODE) {
 
   .detail-pair { display: flex; flex-direction: column; gap: 0; }
   .card-spacer { flex: 1; }
-  .card-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
   .action-btn {
-    flex: 1; padding: 10px 0; border-radius: var(--radius-sm); border: none;
+    flex: 1 1 auto; min-width: 92px; padding: 10px 0; border-radius: var(--radius-sm); border: none;
     font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: var(--transition);
   }
   .action-claim { background: var(--card); color: var(--navy); border: 2px solid var(--navy); }
@@ -1436,6 +1436,7 @@ function cardHTML(r, page) {
     actions = '<div class="card-actions">' +
       '<button class="action-btn action-reject" onclick="rejectLead(' + r.Id + ')">No Opportunity</button>' +
       '<button class="action-btn action-tbc" onclick="tbcLead(' + r.Id + ')">TBC</button>' +
+      '<button class="action-btn action-tbc" onclick="sendToTBC(' + r.Id + ')">Send to&hellip;</button>' +
       '<button class="action-btn action-claim" onclick="claimLead(' + r.Id + ')">Claim</button></div>';
   } else if (st === 'tbc') {
     actions = '<div class="card-actions">' +
@@ -1470,7 +1471,11 @@ function showDialog(opts) {
     const extra = document.getElementById('dialog-extra');
     if (opts.select) {
       extra.innerHTML = '<select class="form-select" id="dialog-select">' +
-        opts.select.map(o => '<option value="' + esc(o) + '">' + esc(o) + '</option>').join('') + '</select>';
+        opts.select.map(o => {
+          const val = (o && typeof o === 'object') ? o.value : o;
+          const lab = (o && typeof o === 'object') ? o.label : o;
+          return '<option value="' + esc(val) + '">' + esc(lab) + '</option>';
+        }).join('') + '</select>';
     } else if (opts.checkGroups) {
       extra.innerHTML = opts.checkGroups.map(function(g) {
         return '<div style="margin-bottom:10px;"><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--gold);margin-bottom:4px;border-bottom:1px solid var(--border);padding-bottom:3px;">' + esc(g.heading) + '</div>' +
@@ -1562,6 +1567,23 @@ async function undoReject(id) {
   }
 }
 function tbcLead(id) { updateLead(id, { TBCBy: ME.email }, 'Marked TBC.'); }
+async function sendToTBC(id) {
+  const r = findRow(id);
+  const users = Object.keys(userMap)
+    .filter(e => e && e !== ME.email.toLowerCase())
+    .map(e => ({ value: e, label: userMap[e] }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  if (!users.length) { toast('No other users available to send to.', true); return; }
+  const target = await showDialog({
+    title: 'Send to someone’s TBC',
+    message: 'Who should pick up "' + (r ? r.Title : '') + '"? It will appear in their TBC list.',
+    select: users,
+    confirmLabel: 'Send',
+    danger: false
+  });
+  if (!target) return;
+  updateLead(id, { TBCBy: target }, 'Sent to ' + displayName(target) + '’s TBC.');
+}
 function undoTBC(id) { updateLead(id, { TBCBy: null }, 'TBC removed - back to open.'); }
 function setQuality(id, rating) { updateLead(id, { QualityRating: rating }, 'Quality feedback saved - future searches learn from this.'); }
 
