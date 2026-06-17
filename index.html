@@ -315,6 +315,9 @@ if (!PREVIEW_MODE) {
   .btn-danger { padding: 10px 18px; background: var(--red); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; }
   .btn-danger:hover { opacity: 0.9; }
   .table-row.is-gone { opacity: 0.42; pointer-events: none; }
+  .claimed-qual { display: flex; gap: 6px; align-items: center; }
+  .claimed-qual .qual-btn { padding: 6px 0; font-size: 13px; }
+  .claimed-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; align-items: center; }
   .note-box {
     width: 100%; min-height: 52px; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
     font-family: 'Lexend', sans-serif; font-size: 14px; color: var(--text-1); background: var(--card); resize: vertical;
@@ -1553,7 +1556,7 @@ async function rejectLead(id) {
   });
   if (!reason) return;
   const row = findRow(id); if (row) row.__gone = true;
-  updateLead(id, { RejectedBy: ME.email, RejectedDate: nowISO(), RejectReason: String(reason) }, 'Rejected - the company joins the exclusion list.');
+  updateLead(id, { RejectedBy: ME.email, RejectedDate: nowISO(), RejectReason: String(reason), ClaimedBy: null, ClaimedDate: null }, 'Rejected - the company joins the exclusion list.');
 }
 async function undoReject(id) {
   const r = findRow(id);
@@ -1566,7 +1569,10 @@ async function undoReject(id) {
     toast('Rejection undone, but exclusion removal failed: ' + e.message, true);
   }
 }
-function tbcLead(id) { updateLead(id, { TBCBy: ME.email }, 'Marked TBC.'); }
+function tbcLead(id) {
+  const row = findRow(id); if (row) row.__gone = true;
+  updateLead(id, { TBCBy: ME.email, ClaimedBy: null, ClaimedDate: null }, 'Marked TBC.');
+}
 async function sendToTBC(id) {
   const r = findRow(id);
   const users = Object.keys(userMap)
@@ -1582,7 +1588,8 @@ async function sendToTBC(id) {
     danger: false
   });
   if (!target) return;
-  updateLead(id, { TBCBy: target }, 'Sent to ' + displayName(target) + '’s TBC.');
+  const row = findRow(id); if (row) row.__gone = true;
+  updateLead(id, { TBCBy: target, ClaimedBy: null, ClaimedDate: null }, 'Sent to ' + displayName(target) + '’s TBC.');
 }
 function undoTBC(id) { updateLead(id, { TBCBy: null }, 'TBC removed - back to open.'); }
 function setQuality(id, rating) { updateLead(id, { QualityRating: rating }, 'Quality feedback saved - future searches learn from this.'); }
@@ -1630,19 +1637,29 @@ async function openClaimed() {
     renderClaimed();
   } catch (e) { toast('Could not load claimed leads: ' + e.message, true); }
 }
+function claimedQualityCell(r) {
+  const q = r.QualityRating || '';
+  return '<div class="claimed-qual" onclick="event.stopPropagation()">' +
+    '<button class="qual-btn q-poor' + (q === 'Poor' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Poor\')">Poor</button>' +
+    '<button class="qual-btn q-ok' + (q === 'Neutral' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Neutral\')">OK</button>' +
+    '<button class="qual-btn q-good' + (q === 'Good' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Good\')">Good</button></div>';
+}
 function renderClaimed() {
-  const mine = claimedRows;
+  const mine = claimedRows.filter(r => !r.__gone && r.ClaimedBy && String(r.ClaimedBy).toLowerCase() === ME.email.toLowerCase() && !r.RejectedBy && !r.TBCBy);
   document.getElementById('claimed-sub').textContent = mine.length + ' lead' + (mine.length === 1 ? '' : 's') + ' claimed by ' + displayName(ME.email);
   document.getElementById('claimed-empty').style.display = mine.length ? 'none' : 'block';
-  const cols = '3fr 1fr 1.4fr';
-  const head = '<div class="table-head" style="grid-template-columns:' + cols + ';"><div>Company</div><div>Claimed</div><div></div></div>';
+  const cols = '2.4fr 0.9fr 1.7fr 2fr';
+  const head = '<div class="table-head" style="grid-template-columns:' + cols + ';"><div>Company</div><div>Claimed</div><div>Lead quality</div><div></div></div>';
   document.getElementById('claimed-table').style.display = mine.length ? 'block' : 'none';
   document.getElementById('claimed-table').innerHTML = head + mine.map(r =>
-    '<div class="table-row' + (r.__gone || !r.ClaimedBy || r.RejectedBy ? ' is-gone' : '') + '" style="grid-template-columns:' + cols + ';" onclick="openLeadModal(' + r.Id + ', true)">' +
+    '<div class="table-row" style="grid-template-columns:' + cols + ';" onclick="openLeadModal(' + r.Id + ', true)">' +
     '<div class="row-name">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' +
     '<div class="row-dim">' + fmtDate(r.ClaimedDate) + '</div>' +
-    '<div onclick="event.stopPropagation()" style="display:flex;gap:8px;justify-content:flex-end;">' +
+    claimedQualityCell(r) +
+    '<div class="claimed-actions" onclick="event.stopPropagation()">' +
     '<button class="btn-unclaim" onclick="unclaimLead(' + r.Id + ')">Unclaim</button>' +
+    '<button class="btn-unclaim" style="color:var(--navy);border-color:var(--border);" onclick="tbcLead(' + r.Id + ')">TBC</button>' +
+    '<button class="btn-unclaim" style="color:var(--navy);border-color:var(--border);" onclick="sendToTBC(' + r.Id + ')">Send to&hellip;</button>' +
     '<button class="btn-unclaim" style="color:var(--amber);border-color:var(--amber-bd);" onclick="rejectLead(' + r.Id + ')">Reject</button></div></div>'
   ).join('');
 }
