@@ -1,1 +1,2194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPP Lead Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script>
+var PREVIEW_MODE = /[?&#]preview/.test(window.location.href);
+if (!PREVIEW_MODE) {
+  document.write('<scr'+'ipt src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"><\/scr'+'ipt>');
+}
+</script>
+<style>
+  :root {
+    /* SPP brand: forest green + rust, from the company logo */
+    --navy:        #007835;
+    --navy-mid:    #0a8f44;
+    --navy-light:  #35a866;
+    --gold:        #a43f17;
+    --gold-bright: #bf4d1d;
+    --gold-pale:   #faeee6;
+    --bg:          #eff3ee;
+    --card:        #ffffff;
+    --border:      #d9e2d9;
+    --text-1:      #14301d;
+    --text-2:      #3c5a45;
+    --text-3:      #7d937f;
+    --green:       #145c2f;
+    --green-bg:    #e6f9ee;
+    --green-bd:    #86efac;
+    --amber:       #7c4c00;
+    --amber-bg:    #fff8e6;
+    --amber-bd:    #fcd34d;
+    --red:         #8b1a1a;
+    --red-bg:      #fef0f0;
+    --red-bd:      #fca5a5;
+    --blue:        #1a4fbd;
+    --blue-bg:     #eaf1ff;
+    --blue-bd:     #93c5fd;
+    --radius-sm:   8px;
+    --radius:      14px;
+    --radius-lg:   20px;
+    --shadow-sm:   0 1px 4px rgba(11,61,30,0.07);
+    --shadow:      0 3px 16px rgba(11,61,30,0.10);
+    --shadow-lg:   0 8px 32px rgba(11,61,30,0.14);
+    --transition:  0.18s ease;
+  }
 
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Lexend', sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    min-height: 100vh;
+    font-size: 17px;
+    line-height: 1.5;
+  }
+
+  /* ---- APP SHELL ---- */
+  .app-header {
+    background: var(--navy);
+    padding: 0 28px;
+    height: 62px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .app-logo { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-mark img { width: 100%; height: 100%; object-fit: cover; }
+  .app-title { font-family: 'Outfit', sans-serif; font-size: 19px; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+  .app-title span { color: #fff; }
+
+  .header-nav { display: flex; align-items: center; gap: 4px; justify-content: center; }
+  .header-right { display: flex; align-items: center; gap: 12px; justify-content: flex-end; }
+  .nav-btn {
+    background: none; border: none; color: rgba(255,255,255,0.65);
+    font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600;
+    padding: 8px 14px; border-radius: 8px; cursor: pointer; transition: var(--transition);
+  }
+  .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+  .nav-btn.active { color: #fff; background: rgba(255,255,255,0.16); }
+
+  .header-user { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,0.7); font-size: 15px; }
+  .user-avatar {
+    width: 34px; height: 34px;
+    background: var(--navy-light);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px; color: #fff;
+  }
+  .btn-signout {
+    background: none; border: 1px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.75);
+    font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600;
+    padding: 7px 14px; border-radius: 7px; cursor: pointer; transition: var(--transition);
+  }
+  .btn-signout:hover { border-color: #fff; color: #fff; }
+
+  /* ---- SIGN IN ---- */
+  .signin-wrap { max-width: 420px; margin: 0 auto; padding: 110px 24px; text-align: center; }
+  .signin-logo { width: 64px; height: 64px; border-radius: 16px; overflow: hidden; margin: 0 auto 24px; }
+  .signin-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .signin-heading { font-family: 'Outfit', sans-serif; font-size: 30px; font-weight: 800; color: var(--navy); margin-bottom: 10px; }
+  .signin-sub { color: var(--text-2); font-size: 16px; font-weight: 300; margin-bottom: 36px; }
+  .signin-error { background: var(--red-bg); border: 1px solid var(--red-bd); color: var(--red); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 15px; margin-top: 20px; display: none; text-align: left; }
+
+  /* ---- SCREENS ---- */
+  .screen { display: none; animation: fadeIn 0.22s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ---- HOME ---- */
+  .home-layout { position: relative; padding: 44px 24px 40px; }
+  .home-layout .recent-panel { position: absolute; left: 24px; top: 44px; width: 300px; }
+  @media (max-width: 1180px) { .home-layout .recent-panel { position: static; width: auto; max-width: 440px; margin: 0 auto 30px; } }
+
+  .recent-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .recent-head { padding: 14px 18px 10px; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); border-bottom: 1px solid var(--border); }
+  .recent-item { padding: 13px 18px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background var(--transition); }
+  .recent-item:hover { background: var(--gold-pale); }
+  .recent-item:last-child { border-bottom: none; }
+  #recent-list { max-height: calc(100vh - 230px); overflow-y: auto; }
+  .recent-crit { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; color: var(--navy); line-height: 1.35; }
+  .recent-meta { font-size: 13px; color: var(--text-3); margin-top: 3px; }
+  .recent-empty { padding: 20px 18px; font-size: 15px; color: var(--text-3); font-weight: 300; }
+
+  .home-main { text-align: center; max-width: 720px; margin: 0 auto; }
+  .home-eyebrow { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
+  .home-heading { font-family: 'Outfit', sans-serif; font-size: 38px; font-weight: 800; color: var(--navy); line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 12px; }
+  .home-sub { color: var(--text-2); font-size: 17px; font-weight: 300; margin-bottom: 40px; max-width: 420px; margin-left: auto; margin-right: auto; }
+  .home-buttons { display: flex; flex-direction: column; gap: 16px; max-width: 520px; margin: 0 auto 40px; }
+
+  .btn-primary {
+    display: flex; align-items: center; gap: 12px;
+    padding: 20px 28px; background: var(--navy); color: #fff;
+    border: none; border-radius: var(--radius);
+    font-family: 'Outfit', sans-serif; font-size: 19px; font-weight: 700;
+    cursor: pointer; transition: var(--transition); box-shadow: var(--shadow); width: 100%; text-align: left;
+  }
+  .btn-primary:hover { background: var(--navy-mid); box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+  .btn-primary .btn-icon { width: 42px; height: 42px; background: var(--gold-bright); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; }
+  .btn-primary .btn-text { flex: 1; }
+  .btn-primary .btn-label { display: block; font-size: 19px; }
+  .btn-primary .btn-desc  { display: block; font-size: 14px; font-weight: 400; opacity: 0.65; margin-top: 2px; }
+
+  .btn-secondary {
+    display: flex; align-items: center; gap: 12px;
+    padding: 20px 28px; background: var(--card); color: var(--navy);
+    border: 2px solid var(--border); border-radius: var(--radius);
+    font-family: 'Outfit', sans-serif; font-size: 19px; font-weight: 700;
+    cursor: pointer; transition: var(--transition); box-shadow: var(--shadow-sm); width: 100%; text-align: left;
+  }
+  .btn-secondary:hover { border-color: var(--navy); box-shadow: var(--shadow); transform: translateY(-1px); }
+  .btn-secondary .btn-icon { width: 42px; height: 42px; background: var(--bg); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; }
+  .btn-secondary .btn-text { flex: 1; }
+  .btn-secondary .btn-label { display: block; font-size: 19px; }
+  .btn-secondary .btn-desc  { display: block; font-size: 14px; font-weight: 400; opacity: 0.55; margin-top: 2px; }
+
+  .home-stats { display: flex; gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); max-width: 520px; margin: 0 auto; }
+  .stat-cell { flex: 1; background: var(--card); padding: 14px 16px; text-align: center; cursor: pointer; transition: background var(--transition); }
+  .stat-cell:hover { background: var(--gold-pale); }
+  .stat-num  { font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 800; color: var(--navy); display: block; }
+  .stat-lbl  { font-size: 13px; color: var(--text-3); font-weight: 400; margin-top: 2px; display: block; }
+
+  /* ---- FORMS ---- */
+  .form-wrap { max-width: 680px; margin: 0 auto; padding: 40px 24px; }
+  .screen-back {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 15px; color: var(--text-2); cursor: pointer;
+    margin-bottom: 28px; font-weight: 400; border: none; background: none; padding: 0;
+    transition: color var(--transition);
+  }
+  .screen-back:hover { color: var(--navy); }
+  .form-heading { font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
+  .form-sub { color: var(--text-2); font-size: 16px; font-weight: 300; margin-bottom: 36px; }
+  .form-field { margin-bottom: 24px; }
+  .form-label { display: block; font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 8px; letter-spacing: 0.02em; text-transform: uppercase; }
+
+  .form-select, .form-input {
+    width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: var(--radius-sm);
+    font-family: 'Lexend', sans-serif; font-size: 17px; color: var(--text-1); background: var(--card);
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .form-select {
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 7L11 1' stroke='%230d2545' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; cursor: pointer;
+  }
+  .form-select:focus, .form-input:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(13,37,69,0.08); }
+
+  .form-submit {
+    width: 100%; padding: 16px 28px; background: var(--navy); color: #fff;
+    border: none; border-radius: var(--radius-sm);
+    font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700;
+    cursor: pointer; transition: var(--transition); margin-top: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .form-submit:hover { background: var(--navy-mid); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .form-submit:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+  /* ---- LOADING ---- */
+  .loading-wrap { max-width: 480px; margin: 0 auto; padding: 80px 24px; text-align: center; }
+  .loading-spinner { width: 56px; height: 56px; border: 4px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 28px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-heading { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+  .loading-sub { color: var(--text-3); font-size: 15px; font-weight: 300; }
+  .loading-steps { list-style: none; margin-top: 28px; text-align: left; max-width: 340px; margin-left: auto; margin-right: auto; }
+  .loading-step { display: flex; align-items: center; gap: 10px; padding: 9px 0; font-size: 15px; color: var(--text-3); border-bottom: 1px solid var(--border); transition: color var(--transition); }
+  .loading-step:last-child { border-bottom: none; }
+  .loading-step .step-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .loading-step.active { color: var(--navy); font-weight: 500; }
+  .loading-step.active .step-dot { border-color: var(--gold-bright); background: var(--gold-pale); }
+  .loading-step.done { color: var(--green); }
+  .loading-step.done .step-dot { border-color: var(--green-bd); background: var(--green-bg); }
+  .loading-cancel { margin-top: 30px; }
+
+  /* ---- RESULTS ---- */
+  .results-wrap { max-width: 1400px; margin: 0 auto; padding: 32px 24px 60px; }
+  .results-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 8px; flex-wrap: wrap; }
+  .results-heading { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; color: var(--navy); }
+  .results-sub { color: var(--text-2); font-size: 15px; font-weight: 300; margin-top: 2px; }
+  .results-actions { display: flex; gap: 10px; align-items: center; }
+  .btn-sm {
+    padding: 10px 18px; background: var(--navy); color: #fff; border: none; border-radius: var(--radius-sm);
+    font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: var(--transition);
+  }
+  .btn-sm:hover { background: var(--navy-mid); }
+  .btn-sm.ghost { background: var(--card); color: var(--navy); border: 2px solid var(--border); }
+  .btn-sm.ghost:hover { border-color: var(--navy); }
+
+  .searching-banner {
+    display: none; align-items: center; gap: 10px; margin: 14px 0 0;
+    background: var(--blue-bg); border: 1px solid var(--blue-bd); color: var(--blue);
+    border-radius: var(--radius-sm); padding: 10px 16px; font-size: 15px;
+  }
+  .searching-banner .mini-spin { width: 16px; height: 16px; border: 2px solid var(--blue-bd); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 18px; margin-top: 22px; }
+
+  .lead-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-sm); padding: 20px; display: flex; flex-direction: column; gap: 10px;
+    transition: box-shadow var(--transition), opacity var(--transition);
+  }
+  .lead-card:hover { box-shadow: var(--shadow); }
+  .lead-card.is-claimed { outline: 2px solid var(--green-bd); }
+  .lead-card.is-rejected { opacity: 0.5; }
+
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .card-name { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; color: var(--navy); line-height: 1.25; cursor: pointer; }
+  .card-name:hover { color: var(--navy-light); }
+  .card-conf { flex-shrink: 0; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; padding: 5px 10px; border-radius: 20px; background: var(--bg); color: var(--text-2); }
+  .card-conf.high { background: var(--green-bg); color: var(--green); }
+  .card-loc { font-size: 14px; color: var(--text-3); }
+  .card-desc { font-size: 15px; color: var(--text-2); font-weight: 300; line-height: 1.55; }
+  .card-hook { background: var(--gold-pale); border-left: 3px solid var(--gold-bright); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 10px 12px; font-size: 14px; color: var(--amber); line-height: 1.5; }
+  .card-url { font-size: 14px; color: var(--blue); text-decoration: none; word-break: break-all; }
+  .card-url:hover { text-decoration: underline; }
+
+  .badge-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .badge { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 20px; border: 1px solid; display: inline-flex; align-items: center; gap: 5px; }
+  .badge.b-green { background: var(--green-bg); border-color: var(--green-bd); color: var(--green); }
+  .badge.b-amber { background: var(--amber-bg); border-color: var(--amber-bd); color: var(--amber); }
+  .badge.b-red   { background: var(--red-bg);   border-color: var(--red-bd);   color: var(--red); }
+  .badge.b-blue  { background: var(--blue-bg);  border-color: var(--blue-bd);  color: var(--blue); }
+  .badge.b-grey  { background: var(--bg); border-color: var(--border); color: var(--text-2); }
+  .badge.clickable { cursor: pointer; }
+  .badge.clickable:hover { box-shadow: var(--shadow-sm); }
+
+  .credit-info { background: var(--bg); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; }
+  .credit-row { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; }
+  .credit-score { font-family: 'Outfit', sans-serif; font-weight: 700; padding: 3px 10px; border-radius: 14px; font-size: 12px; }
+  .credit-score.cs-green { background: var(--green-bg); border: 1px solid var(--green-bd); color: var(--green); }
+  .credit-score.cs-amber { background: var(--amber-bg); border: 1px solid var(--amber-bd); color: var(--amber); }
+  .credit-score.cs-red { background: var(--red-bg); border: 1px solid var(--red-bd); color: var(--red); }
+  .credit-val { color: var(--text-2); }
+  .credit-val b { color: var(--text-1); font-weight: 600; }
+  .credit-stale { font-size: 12px; color: var(--amber); font-weight: 500; }
+  .credit-meta { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+  .cs-picker { background: var(--blue-bg); border: 1px solid var(--blue-bd); border-radius: var(--radius-sm); padding: 10px 12px; }
+  .cs-picker-title { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; color: var(--blue); margin-bottom: 6px; }
+  .cs-picker-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--blue-bd); font-size: 13px; gap: 8px; }
+  .cs-picker-row:last-child { border-bottom: none; }
+  .cs-picker-name { font-weight: 600; color: var(--text-1); flex: 1; }
+  .cs-picker-detail { color: var(--text-3); font-size: 12px; }
+
+  .bt-info { font-size: 14px; color: var(--text-2); background: var(--bg); border-radius: var(--radius-sm); padding: 8px 11px; line-height: 1.5; }
+
+  .detail-pair { display: flex; flex-direction: column; gap: 0; }
+  .card-spacer { flex: 1; }
+  .card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .action-btn {
+    flex: 1 1 auto; min-width: 92px; padding: 10px 0; border-radius: var(--radius-sm); border: none;
+    font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: var(--transition);
+  }
+  .action-claim { background: var(--card); color: var(--navy); border: 2px solid var(--navy); }
+  .action-claim:hover { background: var(--green-bg); }
+  .action-reject { background: var(--card); color: var(--red); border: 2px solid var(--red-bd); }
+  .action-reject:hover { background: var(--red-bg); }
+  .action-tbc { background: var(--card); color: var(--text-2); border: 2px solid var(--border); }
+  .action-tbc:hover { border-color: var(--navy); color: var(--navy); }
+  .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .emoji-row { display: flex; align-items: center; gap: 8px; justify-content: flex-start; }
+  .emoji-lbl { font-size: 13px; color: var(--text-3); margin-right: 2px; flex-shrink: 0; }
+  .qual-btn {
+    background: var(--card); border: 2px solid var(--border); color: var(--text-3);
+    font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600;
+    padding: 10px 0; border-radius: var(--radius-sm); cursor: pointer;
+    flex: 1; text-align: center; transition: var(--transition);
+  }
+  .qual-btn:hover { border-color: var(--text-2); color: var(--text-1); }
+  .qual-btn.selected.q-poor { background: var(--red-bg); border-color: var(--red-bd); color: var(--red); }
+  .qual-btn.selected.q-ok   { background: var(--amber-bg); border-color: var(--amber-bd); color: var(--amber); }
+  .qual-btn.selected.q-good { background: var(--green-bg); border-color: var(--green-bd); color: var(--green); }
+
+  .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+  .btn-danger { padding: 10px 18px; background: var(--red); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .btn-danger:hover { opacity: 0.9; }
+  .table-row.is-gone { opacity: 0.42; pointer-events: none; }
+  .claimed-qual { display: flex; gap: 6px; align-items: center; }
+  .claimed-qual .qual-btn { padding: 6px 0; font-size: 13px; }
+  .claimed-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; align-items: center; }
+  .note-box {
+    width: 100%; min-height: 52px; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    font-family: 'Lexend', sans-serif; font-size: 14px; color: var(--text-1); background: var(--card); resize: vertical;
+  }
+  .note-box:focus { outline: none; border-color: var(--navy); }
+  .note-save { margin-top: 6px; padding: 6px 12px; font-size: 13px; }
+  .modal.with-notes { max-width: 1440px; }
+  .modal-grid { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 26px; align-items: start; }
+  @media (max-width: 760px) { .modal-grid { grid-template-columns: 1fr; } }
+  .notes-side { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; position: sticky; top: 0; }
+  .note-history { max-height: calc(100vh - 290px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+  .note-entry { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; }
+  .note-entry-head { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; color: var(--gold); margin-bottom: 3px; }
+  .note-entry-body { font-size: 14px; color: var(--text-1); white-space: pre-wrap; line-height: 1.5; }
+  .collapse { border-top: 1px solid var(--border); }
+  .collapse summary { cursor: pointer; padding: 11px 0; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); list-style: none; display: flex; align-items: center; gap: 7px; }
+  .collapse summary::-webkit-details-marker { display: none; }
+  .collapse summary::before { content: '\25B8'; font-size: 10px; transition: transform 0.15s ease; }
+  .collapse[open] summary::before { transform: rotate(90deg); }
+
+  .empty-state { text-align: center; padding: 70px 24px; color: var(--text-3); }
+  .empty-state .empty-icon { font-size: 44px; margin-bottom: 12px; }
+  .empty-state .empty-msg { font-size: 17px; font-weight: 300; margin-bottom: 24px; }
+
+  /* ---- TABLE (Claimed / TBC) ---- */
+  .table-wrap { max-width: 1400px; margin: 0 auto; padding: 32px 24px 60px; }
+  .lead-table { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; margin-top: 22px; }
+  .table-head { display: grid; padding: 12px 18px; background: var(--bg); font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-3); border-bottom: 1px solid var(--border); }
+  .table-row { display: grid; padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 15px; align-items: center; cursor: pointer; transition: background var(--transition); }
+  .table-row:hover { background: var(--gold-pale); }
+  .table-row:last-child { border-bottom: none; }
+  .row-name { font-family: 'Outfit', sans-serif; font-weight: 600; color: var(--navy); }
+  .row-dim { color: var(--text-3); font-size: 14px; }
+  .btn-unclaim { padding: 7px 14px; background: var(--card); color: var(--red); border: 1.5px solid var(--red-bd); border-radius: 7px; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: var(--transition); }
+  .btn-unclaim:hover { background: var(--red-bg); }
+
+  /* ---- MODAL ---- */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(13,37,69,0.45); z-index: 200; align-items: flex-start; justify-content: center; padding: 50px 18px; overflow-y: auto; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--card); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); max-width: 760px; width: 100%; padding: 28px; animation: fadeIn 0.18s ease; }
+  .modal-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 4px; }
+  .modal-title { font-family: 'Outfit', sans-serif; font-size: 23px; font-weight: 800; color: var(--navy); }
+  .modal-close { background: var(--bg); border: none; width: 32px; height: 32px; border-radius: 8px; font-size: 16px; cursor: pointer; color: var(--text-2); flex-shrink: 0; }
+  .modal-close:hover { background: var(--border); }
+  .modal-section { margin-top: 18px; }
+  .modal-section h4 { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+  .bt-match-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 15px; align-items: center; }
+  .bt-match-row:last-child { border-bottom: none; }
+  .bt-match-table { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+  .bt-match-head { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; padding: 9px 12px; background: var(--bg); font-family: 'Outfit', sans-serif; font-size: 12.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-3); }
+  .modal-loading { display: flex; align-items: center; gap: 10px; color: var(--text-3); font-size: 15px; padding: 14px 0; }
+  .modal-loading .mini-spin { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .edit-overlay { display: none; position: fixed; inset: 0; background: rgba(13,37,69,0.55); z-index: 300; align-items: flex-start; justify-content: center; padding: 40px 18px; overflow-y: auto; }
+  .edit-overlay.open { display: flex; }
+  .edit-modal { background: var(--card); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); max-width: 480px; width: 100%; padding: 24px 28px; animation: fadeIn 0.18s ease; }
+  .edit-modal-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .edit-modal-title { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; color: var(--navy); }
+  .edit-modal-sub { font-size: 13px; color: var(--text-3); margin-bottom: 16px; }
+  .ecf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ecf-field label { display: block; font-size: 11px; font-weight: 600; color: var(--gold); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .ecf-field input { width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Lexend', sans-serif; font-size: 15px; color: var(--text-1); background: var(--card); transition: border-color var(--transition); }
+  .ecf-field input:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 2px rgba(0,120,53,0.12); }
+  .ecf-full { grid-column: span 2; }
+  .ecf-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .edit-contact-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--navy); cursor: pointer; background: none; border: 1px solid var(--navy); border-radius: var(--radius-sm); padding: 3px 10px; font-family: 'Lexend', sans-serif; font-weight: 500; transition: var(--transition); }
+  .edit-contact-btn:hover { background: var(--green-bg); }
+  .create-lead-form .clf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .create-lead-form .clf-field label { display: block; font-size: 11px; font-weight: 600; color: var(--gold); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .create-lead-form .clf-field label .req { color: var(--red); }
+  .create-lead-form .clf-field input, .create-lead-form .clf-field textarea, .create-lead-form .clf-field select { width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Lexend', sans-serif; font-size: 15px; color: var(--text-1); background: var(--card); transition: border-color var(--transition); }
+  .create-lead-form .clf-field input:focus, .create-lead-form .clf-field textarea:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 2px rgba(0,120,53,0.12); }
+  .create-lead-form .clf-field textarea { resize: vertical; min-height: 60px; }
+  .create-lead-form .clf-full { grid-column: span 2; }
+  .create-lead-form .clf-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .create-lead-form .clf-section { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--navy); margin-top: 14px; margin-bottom: 6px; padding-top: 10px; border-top: 1px solid var(--border); grid-column: span 2; }
+  .create-lead-form .clf-section:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+  .dup-warning { background: var(--amber-bg); border: 1px solid var(--amber-bd); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 14px; font-size: 13px; color: var(--amber); }
+  .dup-warning strong { font-weight: 600; }
+
+  /* ---- TOAST ---- */
+  .toast {
+    position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--navy); color: #fff; padding: 13px 22px; border-radius: 12px;
+    font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600;
+    box-shadow: var(--shadow-lg); z-index: 300; opacity: 0; transition: all 0.25s ease; pointer-events: none;
+    max-width: 90vw; text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.error { background: var(--red); }
+
+  .app-footer { text-align: center; padding: 18px; color: var(--text-3); font-size: 11.5px; font-weight: 300; }
+
+  /* ---- BOLD MODE TOGGLE ---- */
+  .bold-toggle { display: flex; align-items: center; gap: 8px; }
+  .bold-toggle-label { font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); white-space: nowrap; cursor: pointer; user-select: none; }
+  .bold-toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; cursor: pointer; }
+  .bold-toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .bold-toggle-track { position: absolute; inset: 0; background: rgba(255,255,255,0.18); border-radius: 12px; transition: background 0.2s ease; }
+  .bold-toggle-switch input:checked + .bold-toggle-track { background: var(--gold-bright); }
+  .bold-toggle-knob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+  .bold-toggle-switch input:checked ~ .bold-toggle-knob { transform: translateX(18px); }
+
+  /* ---- BOLD MODE ACTIVE ---- */
+  body.bold-mode { font-size: 21px; font-weight: 500; line-height: 1.6; letter-spacing: 0.01em; }
+  body.bold-mode .app-title { font-size: 23px; }
+  body.bold-mode .nav-btn { font-size: 17px; padding: 10px 16px; }
+  body.bold-mode .header-user { font-size: 17px; }
+  body.bold-mode .user-avatar { width: 40px; height: 40px; font-size: 17px; }
+  body.bold-mode .btn-signout { font-size: 16px; padding: 8px 16px; }
+  body.bold-mode .signin-heading { font-size: 36px; }
+  body.bold-mode .signin-sub { font-size: 20px; }
+  body.bold-mode .home-eyebrow { font-size: 15px; }
+  body.bold-mode .home-heading { font-size: 44px; }
+  body.bold-mode .home-sub { font-size: 21px; }
+  body.bold-mode .btn-primary, body.bold-mode .btn-secondary { font-size: 22px; padding: 24px 32px; }
+  body.bold-mode .btn-primary .btn-label, body.bold-mode .btn-secondary .btn-label { font-size: 22px; }
+  body.bold-mode .btn-primary .btn-desc, body.bold-mode .btn-secondary .btn-desc { font-size: 16px; }
+  body.bold-mode .btn-primary .btn-icon, body.bold-mode .btn-secondary .btn-icon { width: 48px; height: 48px; font-size: 24px; }
+  body.bold-mode .stat-num { font-size: 34px; }
+  body.bold-mode .stat-lbl { font-size: 15px; }
+  body.bold-mode .recent-head { font-size: 16px; }
+  body.bold-mode .recent-crit { font-size: 17px; }
+  body.bold-mode .recent-meta { font-size: 15px; }
+  body.bold-mode .form-heading { font-size: 32px; }
+  body.bold-mode .form-sub { font-size: 20px; }
+  body.bold-mode .form-label { font-size: 17px; }
+  body.bold-mode .form-select, body.bold-mode .form-input { font-size: 20px; padding: 16px 18px; }
+  body.bold-mode .form-submit { font-size: 20px; padding: 18px 32px; }
+  body.bold-mode .screen-back { font-size: 17px; }
+  body.bold-mode .loading-heading { font-size: 26px; }
+  body.bold-mode .loading-sub { font-size: 18px; }
+  body.bold-mode .loading-step { font-size: 18px; }
+  body.bold-mode .results-heading { font-size: 30px; }
+  body.bold-mode .results-sub { font-size: 18px; }
+  body.bold-mode .btn-sm { font-size: 17px; padding: 12px 20px; }
+  body.bold-mode .card-name { font-size: 21px; }
+  body.bold-mode .card-conf { font-size: 16px; padding: 6px 12px; }
+  body.bold-mode .card-loc { font-size: 16px; }
+  body.bold-mode .card-desc { font-size: 18px; font-weight: 400; }
+  body.bold-mode .card-hook { font-size: 17px; padding: 12px 14px; }
+  body.bold-mode .card-url { font-size: 16px; }
+  body.bold-mode .badge { font-size: 15px; padding: 5px 12px; }
+  body.bold-mode .bt-info { font-size: 16px; padding: 10px 13px; }
+  body.bold-mode .action-btn { font-size: 17px; padding: 12px 0; }
+  body.bold-mode .qual-btn { font-size: 16px; padding: 12px 0; }
+  body.bold-mode .emoji-lbl { font-size: 15px; }
+  body.bold-mode .table-head { font-size: 15px; }
+  body.bold-mode .table-row { font-size: 18px; padding: 16px 18px; }
+  body.bold-mode .row-name { font-size: 18px; }
+  body.bold-mode .row-dim { font-size: 16px; }
+  body.bold-mode .btn-unclaim { font-size: 16px; }
+  body.bold-mode .modal-title { font-size: 27px; }
+  body.bold-mode .modal-section h4 { font-size: 16px; }
+  body.bold-mode .bt-match-row { font-size: 17px; }
+  body.bold-mode .bt-match-head { font-size: 14px; }
+  body.bold-mode .note-box { font-size: 17px; min-height: 60px; }
+  body.bold-mode .note-entry-head { font-size: 15px; }
+  body.bold-mode .note-entry-body { font-size: 17px; }
+  body.bold-mode .collapse summary { font-size: 16px; }
+  body.bold-mode .toast { font-size: 18px; padding: 14px 24px; }
+  body.bold-mode .app-footer { font-size: 15px; }
+  body.bold-mode .bold-toggle-label { font-size: 14px; }
+  body.bold-mode .searching-banner { font-size: 17px; }
+  body.bold-mode .btn-danger { font-size: 17px; padding: 12px 20px; }
+  body.bold-mode .empty-state .empty-icon { font-size: 52px; }
+  body.bold-mode .empty-state .empty-msg { font-size: 21px; }
+
+  /* Bold Mode: single-column row layout for lead cards */
+  body.bold-mode .card-grid { grid-template-columns: 1fr; gap: 14px; }
+  body.bold-mode .lead-card { flex-direction: column; gap: 8px; padding: 18px 22px; }
+  body.bold-mode .lead-card .card-spacer { display: none; }
+  body.bold-mode .lead-card .collapse { border-top: none; }
+  body.bold-mode .lead-card .collapse summary { display: block; pointer-events: none; padding: 0 0 6px; font-size: 13px; }
+  body.bold-mode .detail-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  body.bold-mode .detail-pair > details { border-top: none; }
+  body.bold-mode .detail-pair > details:not([open]) > div { display: block !important; }
+  body.bold-mode .card-actions .action-btn { padding: 12px 0; }
+
+  /* ---- More button ---- */
+  .more-wrap { text-align: center; margin-top: 24px; }
+  .btn-more { display: inline-flex; align-items: center; gap: 8px; padding: 14px 36px; font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: #fff; background: var(--navy); border: none; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }
+  .btn-more:hover:not(:disabled) { background: var(--navy-light); }
+  .btn-more:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-more .mini-spin { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+  .btn-more:disabled .mini-spin { display: inline-block; }
+  body.bold-mode .btn-more { font-size: 19px; padding: 16px 42px; }
+</style>
+</head>
+<body>
+
+<!-- ======== SIGN IN ======== -->
+<div class="screen active" id="screen-signin">
+  <div class="signin-wrap">
+    <div class="signin-logo"><img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAgAAZABkAAD/7AARRHVja3kAAQAEAAAAZAAA/+4ADkFkb2JlAGTAAAAAAf/bAIQAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQICAgICAgICAgICAwMDAwMDAwMDAwEBAQEBAQECAQECAgIBAgIDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD/8AAEQgBLAEsAwERAAIRAQMRAf/EAaIAAAAGAgMBAAAAAAAAAAAAAAcIBgUECQMKAgEACwEAAAYDAQEBAAAAAAAAAAAABgUEAwcCCAEJAAoLEAACAQMEAQMDAgMDAwIGCXUBAgMEEQUSBiEHEyIACDEUQTIjFQlRQhZhJDMXUnGBGGKRJUOhsfAmNHIKGcHRNSfhUzaC8ZKiRFRzRUY3R2MoVVZXGrLC0uLyZIN0k4Rlo7PD0+MpOGbzdSo5OkhJSlhZWmdoaWp2d3h5eoWGh4iJipSVlpeYmZqkpaanqKmqtLW2t7i5usTFxsfIycrU1dbX2Nna5OXm5+jp6vT19vf4+foRAAIBAwIEBAMFBAQEBgYFbQECAxEEIRIFMQYAIhNBUQcyYRRxCEKBI5EVUqFiFjMJsSTB0UNy8BfhgjQlklMYY0TxorImNRlUNkVkJwpzg5NGdMLS4vJVZXVWN4SFo7PD0+PzKRqUpLTE1OT0laW1xdXl9ShHV2Y4doaWprbG1ub2Z3eHl6e3x9fn90hYaHiImKi4yNjo+DlJWWl5iZmpucnZ6fkqOkpaanqKmqq6ytrq+v/aAAwDAQACEQMRAD8A3+Pfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3XvfuvdF974+Vvxx+MOHTNd99y7F6yp54Xnocfn8xG+5MvFGbSPgdo45a7dW4PEf1Cioqgr+be0l1fWdkuq6kVB8zk/YOJ/IdBnmPnPlXlGD6jmS/trRSKhXb9Rv9JEtZH/ANop6pO7n/4UlfFrZ1TWY/pfqPtLumopTIkOXzFRi+qtp5ErIVjkoq3JU+6d2JBIg1XqMHTuoIGi97By45wsYzS2jeQ+poo/yn/jPUAb996zk6xdothsry/ccGYrbxt9hYSSU/00QPy6rk3v/wAKWfldlJJ06+6N6E2dRyiRI23LHv3fOUpg2sRyQ1lFuzZWOaeIFTeSidCQbpY2BPLzjfN/ZRRKPnqY/wCEf4Oos3D72HOcxI2zbttgQ/788aZh9hEkS1+1CPl0BNd/woU/mJVdVLUU+W6cxcMmjRQ0PWEMlLBojRG8T5PNZGtPlZS7a5n9TG1lsoTHmzdyagxj/a/5z0HZPvOe6DuWV7BFPkLfA/3p2PzyT+zqJ/0EF/zGP+el6n/9Fbi//q33r+te7/xR/wC8jpv/AIJr3S/37Zf9k6/5+vf9BBf8xj/npep//RW4v/6t9+/rXu/8Uf8AvI69/wAE17pf79sv+ydf8/Xv+ggv+Yx/z0vU/wD6K3F//Vvv39a93/ij/wB5HXv+Ca90v9+2X/ZOv+fr3/QQX/MY/wCel6n/APRW4v8A+rffv617v/FH/vI69/wTXul/v2y/7J1/z9e/6CC/5jH/AD0vU/8A6K3F/wD1b79/Wvd/4o/95HXv+Ca90v8Aftl/2Tr/AJ+vf9BBf8xj/npep/8A0VuL/wDq337+te7/AMUf+8jr3/BNe6X+/bL/ALJ1/wA/Xv8AoIL/AJjH/PS9T/8AorcX/wDVvv39a93/AIo/95HXv+Ca90v9+2X/AGTr/n69/wBBBf8AMY/56Xqf/wBFbi//AKt9+/rXu/8AFH/vI69/wTXul/v2y/7J1/z9e/6CC/5jH/PS9T/+itxf/wBW+/f1r3f+KP8A3kde/wCCa90v9+2X/ZOv+fr3/QQX/MY/56Xqf/0VuL/+rffv617v/FH/ALyOvf8ABNe6X+/bL/snX/P17/oIL/mMf89L1P8A+itxf/1b79/Wvd/4o/8AeR17/gmvdL/ftl/2Tr/n69/0EF/zGP8Anpep/wD0VuL/APq337+te7/xR/7yOvf8E17pf79sv+ydf8/Xv+ggv+Yx/wA9L1P/AOitxf8A9W+/f1r3f+KP/eR17/gmvdL/AH7Zf9k6/wCfr3/QQX/MY/56Xqf/ANFbi/8A6t9+/rXu/wDFH/vI69/wTXul/v2y/wCydf8AP17/AKCC/wCYx/z0vU//AKK3F/8A1b79/Wvd/wCKP/eR17/gmvdL/ftl/wBk6/5+vf8AQQX/ADGP+el6n/8ARW4v/wCrffv617v/ABR/7yOvf8E17pf79sv+ydf8/Xv+ggv+Yx/z0vU//orcX/8AVvv39a93/ij/AN5HXv8AgmvdL/ftl/2Tr/n69/0EF/zGP+el6n/9Fbi//q337+te7/xR/wC8jr3/AATXul/v2y/7J1/z9e/6CC/5jH/PS9T/APorcX/9W+/f1r3f+KP/AHkde/4Jr3S/37Zf9k6/5+vf9BBf8xj/AJ6Xqf8A9Fbi/wD6t9+/rXu/8Uf+8jr3/BNe6X+/bL/snX/P1tt/yx/kH2N8qPg90j3z21U4ms7B33/pJ/j9Tg8VFhcXJ/djt3f2zcV9rjIXkiptGE29TK9mOuQM55b2PNlu5r7bIrqehlbVWgoMOwGPsHWa/tJzNunOPt7t/Mm9FG3O58fWUXQv6dzNEtFHDsRa+pqfPo+ns06kfr3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xugt7l7r6q+PfX2b7T7n3xguvth7ejVsjn89UmGJ6iVXNLjMbSQpNkMzmsg0ZWmoaOKerqXGmKNm49sXFzBaRGe4YJEPM/4B6n0Ayeifft/2bljbJN4364jtttiHc7mmfJVAqzO3BUUFmOAD1qJ/Oj/hQn232XVZzr74b46o6c6/LzUDdrZqmpKztjc1OrPHLV4KimFXhOvcdWxMRHZa3LqoSZKmjlJhQBbnzZcTExbePDi/iPxH7PJf5nzqOsI/cT7zm97s8m2ciIbDbMr9Q4BuZB6oDVIFPl8cnBg8Z7Rrpbn3Vuje+eyW6d57kz27tz5moaszG49z5jIZ/PZWreweqyWXytRV5CuqHA5eWR2P9fYReR5WLyMWc8STUn8z1i5eXt5uFy95fyyz3chqzyMzux9WZiWJ+ZPTD7p0m697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r6E/8AI5/7dcfGD/ytf/wRHbXuWOWv+SJB/t/+rjddOPu9f9Of2j/qK/7Tbnq2L2e9TR1737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+690Uz5l/Mzpr4O9PV3bvcGRqnikqv4Ns/Z2FFPPuvfm55YZJ4MFt+kqJoIFEUEbTVdXM6U1HTqWdi5jjkQbjuNvtlubi4PyAHFj6D/KfLoF8+c+bD7e7G297450k6YokoZJpKVCICQMDLMSFVck1oD8/v5t/O/vX529mzb67Zzb0e28XUVsfXvWGHqqhdmdfYepkFqbGUjlBkc5VQRxivys6fd1zoAfHAkMEMV7lul1uk3iznsHwqOCj5fP1PE/Zjrmj7ge43MXuNu53HepNNqhPg26k+FCp8lH4nIprkI1OR5KFVSW+y3oA9e9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3XvfuvdfQn/AJHP/brj4wf+Vr/+CI7a9yxy1/yRIP8Ab/8AVxuunH3ev+nP7R/1Ff8Aabc9Wxez3qaOve/de697917r3v3Xuve/de697917r3v3Xuve/de697917oIO++9OuPjX1FvfuztjOR4DY2w8RJlMpVELJWV1Q8kdJisFh6Uuhr87n8pUQ0dFTggy1MyKSouwT3V1DZ27XM5pEoqf8gHzJwOiPmTmLauU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mAztLUf5PVS+Py6H0yK6LIWx209ntcVtcrpmXVUVB4uxGQSOBHn1nV7N8vbxyp7b7bsG/wAPgbtB9R4ketH067qeRe6NnQ1R1OGNK0NCCBYV7NupO697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917oLe8Oz8Z0l0z2x3FmVjkxfVvXG9OwKynlkMYrIto7dyOdFAjD1tPkHoRBGqAu8kiqoLEAsXM621vJcN8KIW/YK9E/MO7w8v7De77PQw2drLMR6+GjPT7WpQDiSaDPXzg63+YD866+tq66X5mfKeGWtqqirkiovkB2vj6KKSpleZ46Sgot2QUdFSozkRwxIkUaAKqh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1737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3X0J/wCRz/264+MH/la//giO2vcsctf8kSD/AG//AFcbrpx93r/pz+0f9RX/AGm3PVsXs96mjr3v3Xuve/de697917r3v3Xuve/de61V/wDhTj2GINs/E/qennDHKZ3s3sPL0wkYNAMDj9rba27O8X6WFV/ePKKrHlfCwH1PsD85zUSCAeZZj+VAP8J6w4+9vumm02XZVOXkuJ2HpoWOND+euT9h61HvYC6wm697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3XuvoT/yOf+3XHxg/8rX/APBEdte5Y5a/5IkH+3/6uN104+71/wBOf2j/AKiv+0256ti9nvU0de9+691737r3Xvfuvde9+691737r3WkD/wAKQN8tuD5ubB2bDM7UXX/QG1oJqctKVizm5t373zldKiM3hXz4Z8aCVXUTH6mNlCxrzfLr3JIxwSIftJY/4Kdc+fvU7ibn3AtrBT+nbbZGCM/HJLK5PplfD/Zk+mvp7CnWMvXvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+6919Cf8Akc/9uuPjB/5Wv/4Ijtr3LHLX/JEg/wBv/wBXG66cfd6/6c/tH/UV/wBptz1bF7Pepo697917r3v3Xuve/de697917r3v3Xutbf8AmFfyQe4vmn8sex/kLg++evNo7e3dQ7Hx2C2znNt7ircrh6TauxdubarIqqsxzrS1H3uaxlVVIRysdQqnlfYP3blq43G/e7WVFRgtAQaiigf4anrFT3O+75vvP3Ol1zPb7lawWs6xKkbxuWURwpGalcGrqzD5EDy6JV/0DLd6f95OdTf+gjvD/r77Lf6mXX+/o/2HoAf8CVzF/wBHey/5xS/5+vf9Ay3en/eTnU3/AKCO8P8Ar779/Uy6/wB/R/sPXv8AgSuYv+jvZf8AOKX/AD9e/wCgZbvT/vJzqb/0Ed4f9fffv6mXX+/o/wBh69/wJXMX/R3sv+cUv+fr3/QMt3p/3k51N/6CO8P+vvv39TLr/f0f7D17/gSuYv8Ao72X/OKX/P17/oGW70/7yc6m/wDQR3h/199+/qZdf7+j/Yevf8CVzF/0d7L/AJxS/wCfr3/QMt3p/wB5OdTf+gjvD/r779/Uy6/39H+w9e/4ErmL/o72X/OKX/P17/oGW70/7yc6m/8AQR3h/wBfffv6mXX+/o/2Hr3/AAJXMX/R3sv+cUv+fr3/AEDLd6f95OdTf+gjvD/r779/Uy6/39H+w9e/4ErmL/o72X/OKX/P17/oGW70/wC8nOpv/QR3h/199+/qZdf7+j/Yevf8CVzF/wBHey/5xS/5+vf9Ay3en/eTnU3/AKCO8P8Ar779/Uy6/wB/R/sPXv8AgSuYv+jvZf8AOKX/AD9e/wCgZbvT/vJzqb/0Ed4f9fffv6mXX+/o/wBh69/wJXMX/R3sv+cUv+fr3/QMt3p/3k51N/6CO8P+vvv39TLr/f0f7D17/gSuYv8Ao72X/OKX/P17/oGW70/7yc6m/wDQR3h/199+/qZdf7+j/Yevf8CVzF/0d7L/AJxS/wCfr3/QMt3p/wB5OdTf+gjvD/r779/Uy6/39H+w9e/4ErmL/o72X/OKX/P17/oGW70/7yc6m/8AQR3h/wBfffv6mXX+/o/2Hr3/AAJXMX/R3sv+cUv+fr3/AEDLd6f95OdTf+gjvD/r779/Uy6/39H+w9e/4ErmL/o72X/OKX/P17/oGW70/wC8nOpv/QR3h/199+/qZdf7+j/Yevf8CVzF/wBHey/5xS/5+vf9Ay3en/eTnU3/AKCO8P8Ar779/Uy6/wB/R/sPXv8AgSuYv+jvZf8AOKX/AD9e/wCgZbvT/vJzqb/0Ed4f9fffv6mXX+/o/wBh69/wJXMX/R3sv+cUv+fr3/QMt3p/3k51N/6CO8P+vvv39TLr/f0f7D17/gSuYv8Ao72X/OKX/P17/oGW70/7yc6m/wDQR3h/199+/qZdf7+j/Yevf8CVzF/0d7L/AJxS/wCfr3/QMt3p/wB5OdTf+gjvD/r779/Uy6/39H+w9e/4ErmL/o72X/OKX/P17/oGW70/7yc6m/8AQR3h/wBfffv6mXX+/o/2Hr3/AAJXMX/R3sv+cUv+fr3/AEDLd6f95OdTf+gjvD/r779/Uy6/39H+w9e/4ErmL/o72X/OKX/P17/oGW70/wC8nOpv/QR3h/199+/qZdf7+j/Yevf8CVzF/wBHey/5xS/5+vf9Ay3en/eTnU3/AKCO8P8Ar779/Uy6/wB/R/sPXv8AgSuYv+jvZf8AOKX/AD9e/wCgZbvT/vJzqb/0Ed4f9fffv6mXX+/o/wBh69/wJXMX/R3sv+cUv+fr3/QMt3p/3k51N/6CO8P+vvv39TLr/f0f7D17/gSuYv8Ao72X/OKX/P17/oGW70/7yc6m/wDQR3h/199+/qZdf7+j/Yevf8CVzF/0d7L/AJxS/wCfr3/QMt3p/wB5OdTf+gjvD/r779/Uy6/39H+w9e/4ErmL/o72X/OKX/P1srfAD4y534c/EfqX44bl3Pid5Zvrr+/n3u5MHR1lBisl/e7szee+6b7WkryauL7Ok3PHA+s+qSJiPSR7GW1WTbfYR2bsGZNWRwyxb/L1lh7acpXHIvJNlyrdzJPcWvjVkQEK3izyzCgORQSAGvmD0cf2YdDrr3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3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/wDadc9Vae406mvr3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de6+hP/ACp9ntsf+Xl8V8K0JgNb11LvDQwILL2FuXP7/WbmSXioXcwkHIuG+i/pGeHtjafRchbZDSlbfxP+crtL/PXXrlT73343L3X3u4BrpuxF/wA4I0gp5cPDp/n49WD+x31FXXvfuvde9+691737r3Xvfuvde9+691oOfzqf+3mXyV/8o3/74Dqr3g/7wf8ATxdx/wCbH/aLD11A+7t/05zZ/wDqL/7TrnqrT3GnU19e9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+6912qs7KqqWZiFVVBLMxNgqgXJJJ4Hv3HA49aJAFTw6+m90jsj/Rl0x1F1v4hB/o+6w2DsjwqYysP909qYnA+JTDHFERH9hYaUVeOABx76M7NZ/u7aLXb6U8C2ij/AN4RV/ydcbuY9y/fPMN/u9a/VXs81fXxZWeuan8XmT0J/sy6Juve/de697917r3v3Xuve/de697917rQc/nU/wDbzL5K/wDlG/8A3wHVXvB/3g/6eLuP/Nj/ALRYeuoH3dv+nObP/wBRf/adc9Vae406mvr3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3XujJ/Dfrdu3vlf8c+tvH5aXdncvX1Blh4xN49vxblx9buSo8Lemb7XAUtTJoaytosSASQIeUtv/evM+37fSqy3cQb/S6wXP5KCegf7gbuNh5H3bd60eDb52Xy7zGwjFfKrlRXyr19Jv30K65Cde9+691737r3Xvfuvde9+691737r3XvfuvdaDn86n/t5l8lf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8Fn7jf8AKFsn/OG6/wC2zr3/AEDqfCb/AJ+j8pv/AENupf8A7SPv3+sFyd/yk7n/AM5IP+2fr3/BZ+43/KFsn/OG6/7bOvf9A6nwm/5+j8pv/Q26l/8AtI+/f6wXJ3/KTuf/ADkg/wC2fr3/AAWfuN/yhbJ/zhuv+2zr3/QOp8Jv+fo/Kb/0Nupf/tI+/f6wXJ3/ACk7n/zkg/7Z+vf8Fn7jf8oWyf8AOG6/7bOj/fCH+XZ0V8B4OxU6dzPY246vs6XbLbhyvZWY2xmcjT0200zYxWPxMm2dn7Qp6SiMu4KmSYPFK8shS7WRQBzybyDsvI63A2l7iR7kpqaZkYgJq0hdEcYA7iTg1NM46i33H92eZvdBrQ7/AB2kMdkJPDW3SRFJl0ambxJZSTRFAoQAK4yej5+xv1GPXvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3RBu6v5n/AMGfjv2buXp3uLvD+5/Y+z/4N/eLbv8Ao07f3B/Dv7wbfxW6cR/uX2tsDN4Kr+7wWbpZ/wBiql8fl0PpkV0UD7x7kcl7BuMm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b1VTV1B0zsaegz/ce64C9OKbBmSR6HaeJqhYf3l3jPTNTwaTqpqYT1Vm8ARx/wC3fJNxzpva27Bl2iEhp3GKL5Ip/jkIoPQam/DQxL7w+5tn7a8sPdoVbmG5DJaRHNX85WH++4gQx/ibSmNVRv8A+3dvYPaOAwm1dsYqhwW29t4nHYLAYTGU8dJjcRhsTSRUGNxtBSxBY6ejoqOBI40UWVFA95zW8ENrAltbKqW8ahVUCgVVFAAPIACg65bXd3c391Je3jtLdzSM7uxqzOxLMzE8SSSSfXp59vdJ+ve/de697917r3v3Xuve/de697917r3v3Xuve/de697917rQc/nU/wDbzL5K/wDlG/8A3wHVXvB/3g/6eLuP/Nj/ALRYeuoH3dv+nObP/wBRf/adc9Vae406mvr3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917o03xE+IXb/AMzu2sT1b1ThaiSL7iiqN671qaWZ9sdebanqDHU7i3HWK0US6YopftKMSLU5CdPFAC2oqJeVeVN15u3Rdt2xDSoMkhHZEhOXc/t0rWrEUXoE8+c+7D7e7E+9b5IA1CIYQR4k8gGI4xk8SNT00oDqbFK7/HxT+LfV3w+6a250x1VjjFisSGrs9uCthpV3BvbdNXHEmV3XuWppYYVqsnX+FI0W2impYoqeICKJFGc3LHLW28qbRHtG2LSJcsxpqkc/E7kcSeHoAAowB1y454513rn7mGbmHe3rO/akYJ0QxiumKMEmirUk+bMWdu5j0ZD2IOgj1737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691oOfzqf8At5l8lf8Ayjf/AL4Dqr3g/wC8H/Txdx/5sf8AaLD11A+7t/05zZ/+ov8A7TrnqrT3GnU19e9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3VmvwN/la/ID5vZWg3BSUU3WfRcNYUzXbu5cdP9rkIqedYqzHdfYZ2pZ95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stv2H/P17/Xp91P+j5e/70v/AED17/hrf+Xz/wB4p9W/+cGT/wDrp79/ra8if9Gy2/Yf8/Xv9en3U/6Pl7/vS/8AQPXv+Gt/5fP/AHin1b/5wZP/AOunv3+tryJ/0bLb9h/z9e/16fdT/o+Xv+9L/wBA9LHbn8vL4L7VemlxHxL6Daak1GnnzHWm2dyzxu0/3ImE+5KDLTNURTAGOQsZIgAqFVAHtXb8h8l2xBi2uxqOBaFHPGvFw2fQ8R5dF937re5d8CJ993TS3EJcSRjhSlI2UUI4jgeJqejP7T2NsnYVA2K2Ns7a2zMY3i1Y7ae3sTt2gbwKUh1UeHpKOnPhRiF9PpBsPYktbKzsU8Kyiihj9EVUH7FAHQMvty3HdJfH3K4nuJs90rtI2eOXJOfPpU+1PSLr3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de6/9k=" alt="SPP"></div>
+    <div class="signin-heading">SPP <span style="color:var(--gold);">Lead Generator</span></div>
+    <div class="signin-sub">Sign in with your SPP Microsoft account to continue.</div>
+    <button class="form-submit" style="max-width:300px;margin:0 auto;" id="btn-signin" onclick="signIn()">Sign in with Microsoft</button>
+    <div class="signin-error" id="signin-error"></div>
+  </div>
+</div>
+
+<script>
+// In preview mode, skip the sign-in screen immediately
+if (typeof PREVIEW_MODE !== 'undefined' && PREVIEW_MODE) {
+  document.getElementById('screen-signin').classList.remove('active');
+  document.getElementById('screen-signin').style.display = 'none';
+}
+</script>
+
+<!-- ======== APP (hidden until signed in) ======== -->
+<div id="app-shell" style="display:none;">
+
+  <header class="app-header">
+    <div class="app-logo" onclick="goHome()">
+      <div class="logo-mark"><img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAgAAZABkAAD/7AARRHVja3kAAQAEAAAAZAAA/+4ADkFkb2JlAGTAAAAAAf/bAIQAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQICAgICAgICAgICAwMDAwMDAwMDAwEBAQEBAQECAQECAgIBAgIDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD/8AAEQgBLAEsAwERAAIRAQMRAf/EAaIAAAAGAgMBAAAAAAAAAAAAAAcIBgUECQMKAgEACwEAAAYDAQEBAAAAAAAAAAAABgUEAwcCCAEJAAoLEAACAQMEAQMDAgMDAwIGCXUBAgMEEQUSBiEHEyIACDEUQTIjFQlRQhZhJDMXUnGBGGKRJUOhsfAmNHIKGcHRNSfhUzaC8ZKiRFRzRUY3R2MoVVZXGrLC0uLyZIN0k4Rlo7PD0+MpOGbzdSo5OkhJSlhZWmdoaWp2d3h5eoWGh4iJipSVlpeYmZqkpaanqKmqtLW2t7i5usTFxsfIycrU1dbX2Nna5OXm5+jp6vT19vf4+foRAAIBAwIEBAMFBAQEBgYFbQECAxEEIRIFMQYAIhNBUQcyYRRxCEKBI5EVUqFiFjMJsSTB0UNy8BfhgjQlklMYY0TxorImNRlUNkVkJwpzg5NGdMLS4vJVZXVWN4SFo7PD0+PzKRqUpLTE1OT0laW1xdXl9ShHV2Y4doaWprbG1ub2Z3eHl6e3x9fn90hYaHiImKi4yNjo+DlJWWl5iZmpucnZ6fkqOkpaanqKmqq6ytrq+v/aAAwDAQACEQMRAD8A3+Pfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3XvfuvdF974+Vvxx+MOHTNd99y7F6yp54Xnocfn8xG+5MvFGbSPgdo45a7dW4PEf1Cioqgr+be0l1fWdkuq6kVB8zk/YOJ/IdBnmPnPlXlGD6jmS/trRSKhXb9Rv9JEtZH/ANop6pO7n/4UlfFrZ1TWY/pfqPtLumopTIkOXzFRi+qtp5ErIVjkoq3JU+6d2JBIg1XqMHTuoIGi97By45wsYzS2jeQ+poo/yn/jPUAb996zk6xdothsry/ccGYrbxt9hYSSU/00QPy6rk3v/wAKWfldlJJ06+6N6E2dRyiRI23LHv3fOUpg2sRyQ1lFuzZWOaeIFTeSidCQbpY2BPLzjfN/ZRRKPnqY/wCEf4Oos3D72HOcxI2zbttgQ/788aZh9hEkS1+1CPl0BNd/woU/mJVdVLUU+W6cxcMmjRQ0PWEMlLBojRG8T5PNZGtPlZS7a5n9TG1lsoTHmzdyagxj/a/5z0HZPvOe6DuWV7BFPkLfA/3p2PzyT+zqJ/0EF/zGP+el6n/9Fbi//q33r+te7/xR/wC8jpv/AIJr3S/37Zf9k6/5+vf9BBf8xj/npep//RW4v/6t9+/rXu/8Uf8AvI69/wAE17pf79sv+ydf8/Xv+ggv+Yx/z0vU/wD6K3F//Vvv39a93/ij/wB5HXv+Ca90v9+2X/ZOv+fr3/QQX/MY/wCel6n/APRW4v8A+rffv617v/FH/vI69/wTXul/v2y/7J1/z9e/6CC/5jH/AD0vU/8A6K3F/wD1b79/Wvd/4o/95HXv+Ca90v8Aftl/2Tr/AJ+vf9BBf8xj/npep/8A0VuL/wDq337+te7/AMUf+8jr3/BNe6X+/bL/ALJ1/wA/Xv8AoIL/AJjH/PS9T/8AorcX/wDVvv39a93/AIo/95HXv+Ca90v9+2X/AGTr/n69/wBBBf8AMY/56Xqf/wBFbi//AKt9+/rXu/8AFH/vI69/wTXul/v2y/7J1/z9e/6CC/5jH/PS9T/+itxf/wBW+/f1r3f+KP8A3kde/wCCa90v9+2X/ZOv+fr3/QQX/MY/56Xqf/0VuL/+rffv617v/FH/ALyOvf8ABNe6X+/bL/snX/P17/oIL/mMf89L1P8A+itxf/1b79/Wvd/4o/8AeR17/gmvdL/ftl/2Tr/n69/0EF/zGP8Anpep/wD0VuL/APq337+te7/xR/7yOvf8E17pf79sv+ydf8/Xv+ggv+Yx/wA9L1P/AOitxf8A9W+/f1r3f+KP/eR17/gmvdL/AH7Zf9k6/wCfr3/QQX/MY/56Xqf/ANFbi/8A6t9+/rXu/wDFH/vI69/wTXul/v2y/wCydf8AP17/AKCC/wCYx/z0vU//AKK3F/8A1b79/Wvd/wCKP/eR17/gmvdL/ftl/wBk6/5+vf8AQQX/ADGP+el6n/8ARW4v/wCrffv617v/ABR/7yOvf8E17pf79sv+ydf8/Xv+ggv+Yx/z0vU//orcX/8AVvv39a93/ij/AN5HXv8AgmvdL/ftl/2Tr/n69/0EF/zGP+el6n/9Fbi//q337+te7/xR/wC8jr3/AATXul/v2y/7J1/z9e/6CC/5jH/PS9T/APorcX/9W+/f1r3f+KP/AHkde/4Jr3S/37Zf9k6/5+vf9BBf8xj/AJ6Xqf8A9Fbi/wD6t9+/rXu/8Uf+8jr3/BNe6X+/bL/snX/P1tt/yx/kH2N8qPg90j3z21U4ms7B33/pJ/j9Tg8VFhcXJ/djt3f2zcV9rjIXkiptGE29TK9mOuQM55b2PNlu5r7bIrqehlbVWgoMOwGPsHWa/tJzNunOPt7t/Mm9FG3O58fWUXQv6dzNEtFHDsRa+pqfPo+ns06kfr3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xugt7l7r6q+PfX2b7T7n3xguvth7ejVsjn89UmGJ6iVXNLjMbSQpNkMzmsg0ZWmoaOKerqXGmKNm49sXFzBaRGe4YJEPM/4B6n0Ayeifft/2bljbJN4364jtttiHc7mmfJVAqzO3BUUFmOAD1qJ/Oj/hQn232XVZzr74b46o6c6/LzUDdrZqmpKztjc1OrPHLV4KimFXhOvcdWxMRHZa3LqoSZKmjlJhQBbnzZcTExbePDi/iPxH7PJf5nzqOsI/cT7zm97s8m2ciIbDbMr9Q4BuZB6oDVIFPl8cnBg8Z7Rrpbn3Vuje+eyW6d57kz27tz5moaszG49z5jIZ/PZWreweqyWXytRV5CuqHA5eWR2P9fYReR5WLyMWc8STUn8z1i5eXt5uFy95fyyz3chqzyMzux9WZiWJ+ZPTD7p0m697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r6E/8AI5/7dcfGD/ytf/wRHbXuWOWv+SJB/t/+rjddOPu9f9Of2j/qK/7Tbnq2L2e9TR1737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+690Uz5l/Mzpr4O9PV3bvcGRqnikqv4Ns/Z2FFPPuvfm55YZJ4MFt+kqJoIFEUEbTVdXM6U1HTqWdi5jjkQbjuNvtlubi4PyAHFj6D/KfLoF8+c+bD7e7G297450k6YokoZJpKVCICQMDLMSFVck1oD8/v5t/O/vX529mzb67Zzb0e28XUVsfXvWGHqqhdmdfYepkFqbGUjlBkc5VQRxivys6fd1zoAfHAkMEMV7lul1uk3iznsHwqOCj5fP1PE/Zjrmj7ge43MXuNu53HepNNqhPg26k+FCp8lH4nIprkI1OR5KFVSW+y3oA9e9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3XvfuvdfQn/AJHP/brj4wf+Vr/+CI7a9yxy1/yRIP8Ab/8AVxuunH3ev+nP7R/1Ff8Aabc9Wxez3qaOve/de697917r3v3Xuve/de697917r3v3Xuve/de697917oIO++9OuPjX1FvfuztjOR4DY2w8RJlMpVELJWV1Q8kdJisFh6Uuhr87n8pUQ0dFTggy1MyKSouwT3V1DZ27XM5pEoqf8gHzJwOiPmTmLauU9kuOYN6kEW3WyamPmTwVFHm7sQqDzYj7evnQfOj5sdpfOvvLN9t9hVU+OwNPJU4rrTr2CtnqcD11s1ZV+0xGPRysdRl8gsKVGVr9CPX1pLBY4EgghiPc9yn3O5M8uE4Kvko9Pt9T5n5UA5b+4nP+8e4vMUm97mStsCVghBJSCLyVfVmoGkegLtmgUKqk09l3QD697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r6E/8jn/ALdcfGD/AMrX/wDBEdte5Y5a/wCSJB/t/wDq43XTj7vX/Tn9o/6iv+0256ti9nvU0de9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3WtF/Oj+N38y75qdhbd6r6K6GrMp8aOt46TNUmV/0r9K7dXsrsHJY5Grdx1uF3H2Vhs5TY3aVJVvjMfDV0kEgnNZONcc8BQG8x2e87jMILWKtmma6kGpj50LA44Co9T5jrE7375V92eft0i2fl3bWflO0AYN9Rap48zLlyrzq4WMExoGUGviNkMtKNf+GOf5o//eMH/sa/jv8A/ba9hn+rW9/74/43H/0F1jx/wPXvB/0aP+zqy/7aevf8Mc/zR/8AvGD/ANjX8d//ALbXv39Wt7/3x/xuP/oLr3/A9e8H/Ro/7OrL/tp69/wxz/NH/wC8YP8A2Nfx3/8Atte/f1a3v/fH/G4/+guvf8D17wf9Gj/s6sv+2nr3/DHP80f/ALxg/wDY1/Hf/wC2179/Vre/98f8bj/6C69/wPXvB/0aP+zqy/7aevf8Mc/zR/8AvGD/ANjX8d//ALbXv39Wt7/3x/xuP/oLr3/A9e8H/Ro/7OrL/tp69/wxz/NH/wC8YP8A2Nfx3/8Atte/f1a3v/fH/G4/+guvf8D17wf9Gj/s6sv+2nr3/DHP80f/ALxg/wDY1/Hf/wC2179/Vre/98f8bj/6C69/wPXvB/0aP+zqy/7aevf8Mc/zR/8AvGD/ANjX8d//ALbXv39Wt7/3x/xuP/oLr3/A9e8H/Ro/7OrL/tp69/wxz/NH/wC8YP8A2Nfx3/8Atte/f1a3v/fH/G4/+guvf8D17wf9Gj/s6sv+2nr3/DHP80f/ALxg/wDY1/Hf/wC2179/Vre/98f8bj/6C69/wPXvB/0aP+zqy/7aevf8Mc/zR/8AvGD/ANjX8d//ALbXv39Wt7/3x/xuP/oLr3/A9e8H/Ro/7OrL/tp69/wxz/NH/wC8YP8A2Nfx3/8Atte/f1a3v/fH/G4/+guvf8D17wf9Gj/s6sv+2nr3/DHP80f/ALxg/wDY1/Hf/wC2179/Vre/98f8bj/6C69/wPXvB/0aP+zqy/7aevf8Mc/zR/8AvGD/ANjX8d//ALbXv39Wt7/3x/xuP/oLr3/A9e8H/Ro/7OrL/tp69/wxz/NH/wC8YP8A2Nfx3/8Atte/f1a3v/fH/G4/+guvf8D17wf9Gj/s6sv+2nr3/DHP80f/ALxg/wDY1/Hf/wC2179/Vre/98f8bj/6C69/wPXvB/0aP+zqy/7aevf8Mc/zR/8AvGD/ANjX8d//ALbXv39Wt7/3x/xuP/oLr3/A9e8H/Ro/7OrL/tp69/wxz/NH/wC8YP8A2Nfx3/8Atte/f1a3v/fH/G4/+guvf8D17wf9Gj/s6sv+2nr3/DHP80f/ALxg/wDY1/Hf/wC2179/Vre/98f8bj/6C69/wPXvB/0aP+zqy/7aevf8Mc/zR/8AvGD/ANjX8d//ALbXv39Wt7/3x/xuP/oLr3/A9e8H/Ro/7OrL/tp69/wxz/NH/wC8YP8A2Nfx3/8Atte/f1a3v/fH/G4/+guvf8D17wf9Gj/s6sv+2nr3/DHP80f/ALxg/wDY1/Hf/wC2179/Vre/98f8bj/6C69/wPXvB/0aP+zqy/7aevf8Mc/zR/8AvGD/ANjX8d//ALbXv39Wt7/3x/xuP/oLr3/A9e8H/Ro/7OrL/tp69/wxz/NH/wC8YP8A2Nfx3/8Atte/f1a3v/fH/G4/+guvf8D17wf9Gj/s6sv+2nr3/DHP80f/ALxg/wDY1/Hf/wC2179/Vre/98f8bj/6C69/wPXvB/0aP+zqy/7aevf8Mc/zR/8AvGD/ANjX8d//ALbXv39Wt7/3x/xuP/oLr3/A9e8H/Ro/7OrL/tp69/wxz/NH/wC8YP8A2Nfx3/8Atte/f1a3v/fH/G4/+guvf8D17wf9Gj/s6sv+2nrcd/lV9HdpfG74FdD9Ld07X/uZ2Zsz/Sh/eXbX8b27uL+G/wB4u5uxN14b/cztTL53AVn3mAztLUf5PVS+Py6H0yK6LIWx209ntcVtcrpmXVUVB4uxGQSOBHn1nV7N8vbxyp7b7bsG/wAPgbtB9R4ketH067qeRe6NnQ1R1OGNK0NCCBYV7NupO697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917oLe8Oz8Z0l0z2x3FmVjkxfVvXG9OwKynlkMYrIto7dyOdFAjD1tPkHoRBGqAu8kiqoLEAsXM621vJcN8KIW/YK9E/MO7w8v7De77PQw2drLMR6+GjPT7WpQDiSaDPXzg63+YD866+tq66X5mfKeGWtqqirkiovkB2vj6KKSpleZ46Sgot2QUdFSozkRwxIkUaAKqh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1737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3X0J/wCRz/264+MH/la//giO2vcsctf8kSD/AG//AFcbrpx93r/pz+0f9RX/AGm3PVsXs96mjr3v3Xuve/de697917r3v3Xuve/de61V/wDhTj2GINs/E/qennDHKZ3s3sPL0wkYNAMDj9rba27O8X6WFV/ePKKrHlfCwH1PsD85zUSCAeZZj+VAP8J6w4+9vumm02XZVOXkuJ2HpoWOND+euT9h61HvYC6wm697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3XuvoT/yOf+3XHxg/8rX/APBEdte5Y5a/5IkH+3/6uN104+71/wBOf2j/AKiv+0256ti9nvU0de9+691737r3Xvfuvde9+691737r3WkD/wAKQN8tuD5ubB2bDM7UXX/QG1oJqctKVizm5t373zldKiM3hXz4Z8aCVXUTH6mNlCxrzfLr3JIxwSIftJY/4Kdc+fvU7ibn3AtrBT+nbbZGCM/HJLK5PplfD/Zk+mvp7CnWMvXvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+6919Cf8Akc/9uuPjB/5Wv/4Ijtr3LHLX/JEg/wBv/wBXG66cfd6/6c/tH/UV/wBptz1bF7Pepo697917r3v3Xuve/de697917r3v3Xutbf8AmFfyQe4vmn8sex/kLg++evNo7e3dQ7Hx2C2znNt7ircrh6TauxdubarIqqsxzrS1H3uaxlVVIRysdQqnlfYP3blq43G/e7WVFRgtAQaiigf4anrFT3O+75vvP3Ol1zPb7lawWs6xKkbxuWURwpGalcGrqzD5EDy6JV/0DLd6f95OdTf+gjvD/r77Lf6mXX+/o/2HoAf8CVzF/wBHey/5xS/5+vf9Ay3en/eTnU3/AKCO8P8Ar779/Uy6/wB/R/sPXv8AgSuYv+jvZf8AOKX/AD9e/wCgZbvT/vJzqb/0Ed4f9fffv6mXX+/o/wBh69/wJXMX/R3sv+cUv+fr3/QMt3p/3k51N/6CO8P+vvv39TLr/f0f7D17/gSuYv8Ao72X/OKX/P17/oGW70/7yc6m/wDQR3h/199+/qZdf7+j/Yevf8CVzF/0d7L/AJxS/wCfr3/QMt3p/wB5OdTf+gjvD/r779/Uy6/39H+w9e/4ErmL/o72X/OKX/P17/oGW70/7yc6m/8AQR3h/wBfffv6mXX+/o/2Hr3/AAJXMX/R3sv+cUv+fr3/AEDLd6f95OdTf+gjvD/r779/Uy6/39H+w9e/4ErmL/o72X/OKX/P17/oGW70/wC8nOpv/QR3h/199+/qZdf7+j/Yevf8CVzF/wBHey/5xS/5+vf9Ay3en/eTnU3/AKCO8P8Ar779/Uy6/wB/R/sPXv8AgSuYv+jvZf8AOKX/AD9e/wCgZbvT/vJzqb/0Ed4f9fffv6mXX+/o/wBh69/wJXMX/R3sv+cUv+fr3/QMt3p/3k51N/6CO8P+vvv39TLr/f0f7D17/gSuYv8Ao72X/OKX/P17/oGW70/7yc6m/wDQR3h/199+/qZdf7+j/Yevf8CVzF/0d7L/AJxS/wCfr3/QMt3p/wB5OdTf+gjvD/r779/Uy6/39H+w9e/4ErmL/o72X/OKX/P17/oGW70/7yc6m/8AQR3h/wBfffv6mXX+/o/2Hr3/AAJXMX/R3sv+cUv+fr3/AEDLd6f95OdTf+gjvD/r779/Uy6/39H+w9e/4ErmL/o72X/OKX/P17/oGW70/wC8nOpv/QR3h/199+/qZdf7+j/Yevf8CVzF/wBHey/5xS/5+vf9Ay3en/eTnU3/AKCO8P8Ar779/Uy6/wB/R/sPXv8AgSuYv+jvZf8AOKX/AD9e/wCgZbvT/vJzqb/0Ed4f9fffv6mXX+/o/wBh69/wJXMX/R3sv+cUv+fr3/QMt3p/3k51N/6CO8P+vvv39TLr/f0f7D17/gSuYv8Ao72X/OKX/P17/oGW70/7yc6m/wDQR3h/199+/qZdf7+j/Yevf8CVzF/0d7L/AJxS/wCfr3/QMt3p/wB5OdTf+gjvD/r779/Uy6/39H+w9e/4ErmL/o72X/OKX/P17/oGW70/7yc6m/8AQR3h/wBfffv6mXX+/o/2Hr3/AAJXMX/R3sv+cUv+fr3/AEDLd6f95OdTf+gjvD/r779/Uy6/39H+w9e/4ErmL/o72X/OKX/P17/oGW70/wC8nOpv/QR3h/199+/qZdf7+j/Yevf8CVzF/wBHey/5xS/5+vf9Ay3en/eTnU3/AKCO8P8Ar779/Uy6/wB/R/sPXv8AgSuYv+jvZf8AOKX/AD9e/wCgZbvT/vJzqb/0Ed4f9fffv6mXX+/o/wBh69/wJXMX/R3sv+cUv+fr3/QMt3p/3k51N/6CO8P+vvv39TLr/f0f7D17/gSuYv8Ao72X/OKX/P17/oGW70/7yc6m/wDQR3h/199+/qZdf7+j/Yevf8CVzF/0d7L/AJxS/wCfr3/QMt3p/wB5OdTf+gjvD/r779/Uy6/39H+w9e/4ErmL/o72X/OKX/P1srfAD4y534c/EfqX44bl3Pid5Zvrr+/n3u5MHR1lBisl/e7szee+6b7WkryauL7Ok3PHA+s+qSJiPSR7GW1WTbfYR2bsGZNWRwyxb/L1lh7acpXHIvJNlyrdzJPcWvjVkQEK3izyzCgORQSAGvmD0cf2YdDrr3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3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/wDadc9Vae406mvr3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de6+hP/ACp9ntsf+Xl8V8K0JgNb11LvDQwILL2FuXP7/WbmSXioXcwkHIuG+i/pGeHtjafRchbZDSlbfxP+crtL/PXXrlT73343L3X3u4BrpuxF/wA4I0gp5cPDp/n49WD+x31FXXvfuvde9+691737r3Xvfuvde9+691oOfzqf+3mXyV/8o3/74Dqr3g/7wf8ATxdx/wCbH/aLD11A+7t/05zZ/wDqL/7TrnqrT3GnU19e9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+6912qs7KqqWZiFVVBLMxNgqgXJJJ4Hv3HA49aJAFTw6+m90jsj/Rl0x1F1v4hB/o+6w2DsjwqYysP909qYnA+JTDHFERH9hYaUVeOABx76M7NZ/u7aLXb6U8C2ij/AN4RV/ydcbuY9y/fPMN/u9a/VXs81fXxZWeuan8XmT0J/sy6Juve/de697917r3v3Xuve/de697917rQc/nU/wDbzL5K/wDlG/8A3wHVXvB/3g/6eLuP/Nj/ALRYeuoH3dv+nObP/wBRf/adc9Vae406mvr3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3XujJ/Dfrdu3vlf8c+tvH5aXdncvX1Blh4xN49vxblx9buSo8Lemb7XAUtTJoaytosSASQIeUtv/evM+37fSqy3cQb/S6wXP5KCegf7gbuNh5H3bd60eDb52Xy7zGwjFfKrlRXyr19Jv30K65Cde9+691737r3Xvfuvde9+691737r3XvfuvdaDn86n/t5l8lf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8Fn7jf8AKFsn/OG6/wC2zr3/AEDqfCb/AJ+j8pv/AENupf8A7SPv3+sFyd/yk7n/AM5IP+2fr3/BZ+43/KFsn/OG6/7bOvf9A6nwm/5+j8pv/Q26l/8AtI+/f6wXJ3/KTuf/ADkg/wC2fr3/AAWfuN/yhbJ/zhuv+2zr3/QOp8Jv+fo/Kb/0Nupf/tI+/f6wXJ3/ACk7n/zkg/7Z+vf8Fn7jf8oWyf8AOG6/7bOj/fCH+XZ0V8B4OxU6dzPY246vs6XbLbhyvZWY2xmcjT0200zYxWPxMm2dn7Qp6SiMu4KmSYPFK8shS7WRQBzybyDsvI63A2l7iR7kpqaZkYgJq0hdEcYA7iTg1NM46i33H92eZvdBrQ7/AB2kMdkJPDW3SRFJl0ambxJZSTRFAoQAK4yej5+xv1GPXvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3RBu6v5n/AMGfjv2buXp3uLvD+5/Y+z/4N/eLbv8Ao07f3B/Dv7wbfxW6cR/uX2tsDN4Kr+7wWbpZ/wBiql8fl0PpkV0UD7x7kcl7BuMm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b1VTV1B0zsaegz/ce64C9OKbBmSR6HaeJqhYf3l3jPTNTwaTqpqYT1Vm8ARx/wC3fJNxzpva27Bl2iEhp3GKL5Ip/jkIoPQam/DQxL7w+5tn7a8sPdoVbmG5DJaRHNX85WH++4gQx/ibSmNVRv8A+3dvYPaOAwm1dsYqhwW29t4nHYLAYTGU8dJjcRhsTSRUGNxtBSxBY6ejoqOBI40UWVFA95zW8ENrAltbKqW8ahVUCgVVFAAPIACg65bXd3c391Je3jtLdzSM7uxqzOxLMzE8SSSSfXp59vdJ+ve/de697917r3v3Xuve/de697917r3v3Xuve/de697917rQc/nU/wDbzL5K/wDlG/8A3wHVXvB/3g/6eLuP/Nj/ALRYeuoH3dv+nObP/wBRf/adc9Vae406mvr3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917o03xE+IXb/AMzu2sT1b1ThaiSL7iiqN671qaWZ9sdebanqDHU7i3HWK0US6YopftKMSLU5CdPFAC2oqJeVeVN15u3Rdt2xDSoMkhHZEhOXc/t0rWrEUXoE8+c+7D7e7E+9b5IA1CIYQR4k8gGI4xk8SNT00oDqbFK7/HxT+LfV3w+6a250x1VjjFisSGrs9uCthpV3BvbdNXHEmV3XuWppYYVqsnX+FI0W2impYoqeICKJFGc3LHLW28qbRHtG2LSJcsxpqkc/E7kcSeHoAAowB1y454513rn7mGbmHe3rO/akYJ0QxiumKMEmirUk+bMWdu5j0ZD2IOgj1737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691oOfzqf8At5l8lf8Ayjf/AL4Dqr3g/wC8H/Txdx/5sf8AaLD11A+7t/05zZ/+ov8A7TrnqrT3GnU19e9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3Xvfuvde9+691737r3VmvwN/la/ID5vZWg3BSUU3WfRcNYUzXbu5cdP9rkIqedYqzHdfYZ2pZ95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stv2H/P17/Xp91P+j5e/70v/AED17/hrf+Xz/wB4p9W/+cGT/wDrp79/ra8if9Gy2/Yf8/Xv9en3U/6Pl7/vS/8AQPXv+Gt/5fP/AHin1b/5wZP/AOunv3+tryJ/0bLb9h/z9e/16fdT/o+Xv+9L/wBA9LHbn8vL4L7VemlxHxL6Daak1GnnzHWm2dyzxu0/3ImE+5KDLTNURTAGOQsZIgAqFVAHtXb8h8l2xBi2uxqOBaFHPGvFw2fQ8R5dF937re5d8CJ993TS3EJcSRjhSlI2UUI4jgeJqejP7T2NsnYVA2K2Ns7a2zMY3i1Y7ae3sTt2gbwKUh1UeHpKOnPhRiF9PpBsPYktbKzsU8Kyiihj9EVUH7FAHQMvty3HdJfH3K4nuJs90rtI2eOXJOfPpU+1PSLr3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de697917r3v3Xuve/de6/9k=" alt="SPP"></div>
+      <div class="app-title">SPP <span>Lead Generator</span></div>
+    </div>
+    <nav class="header-nav">
+      <button class="nav-btn" data-nav="screen-home" onclick="goHome()">Home</button>
+      <button class="nav-btn" data-nav="screen-claimed" onclick="openClaimed()">My Claimed</button>
+      <button class="nav-btn" data-nav="screen-tbc" onclick="openTBC('mine')">My TBC Leads</button>
+      <button class="nav-btn" data-nav="screen-prevsearch" onclick="openPrevSearches()">Previous Searches</button>
+    </nav>
+    <div class="header-right">
+      <div class="bold-toggle">
+        <label class="bold-toggle-switch" title="Bold Mode - larger, clearer text">
+          <input type="checkbox" id="bold-mode-toggle" onchange="toggleBoldMode(this.checked)">
+          <span class="bold-toggle-track"></span>
+          <span class="bold-toggle-knob"></span>
+        </label>
+        <label class="bold-toggle-label" for="bold-mode-toggle">Bold Mode</label>
+      </div>
+      <div class="header-user">
+        <span id="user-name"></span>
+        <button class="btn-signout" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======== HOME ======== -->
+  <div class="screen" id="screen-home">
+    <div class="home-layout">
+      <aside class="recent-panel">
+        <div class="recent-head">Recent Searches</div>
+        <div id="recent-list"><div class="recent-empty">Loading...</div></div>
+      </aside>
+      <main class="home-main">
+        <div class="home-eyebrow">Specialised Panel Products</div>
+        <div class="home-heading">Find your next<br>trade customer</div>
+        <div class="home-sub">AI-assisted lead generation for plywood and panel products, checked against live BT customer data.</div>
+        <div class="home-buttons">
+          <button class="btn-primary" onclick="goTo('screen-generate')">
+            <span class="btn-icon">&#128269;</span>
+            <span class="btn-text"><span class="btn-label">Generate Leads</span><span class="btn-desc">Search by industry, product range and region</span></span>
+          </button>
+          <button class="btn-secondary" onclick="goTo('screen-similar')">
+            <span class="btn-icon">&#127970;</span>
+            <span class="btn-text"><span class="btn-label">Find Similar Companies</span><span class="btn-desc">Start from a company website you already rate</span></span>
+          </button>
+        </div>
+        <div class="home-stats">
+          <div class="stat-cell" onclick="openClaimed()"><span class="stat-num" id="stat-claimed">&ndash;</span><span class="stat-lbl">My claimed</span></div>
+          <div class="stat-cell" onclick="openTBC('mine')"><span class="stat-num" id="stat-mytbc">&ndash;</span><span class="stat-lbl">My TBC leads</span></div>
+        </div>
+        <div class="home-stats" style="margin-top:10px;">
+          <div class="stat-cell" onclick="openTBC()"><span class="stat-num" id="stat-tbc">&ndash;</span><span class="stat-lbl">Awaiting review</span></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ======== GENERATE ======== -->
+  <div class="screen" id="screen-generate">
+    <div class="form-wrap">
+      <button class="screen-back" onclick="goHome()">&larr; Back</button>
+      <div class="form-heading">Generate Leads</div>
+      <div class="form-sub">Pick your criteria. The search takes around three minutes and verifies every company website before saving.</div>
+      <div class="form-field">
+        <label class="form-label">Industry / Sector</label>
+        <select class="form-select" id="gen-industry"></select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">SPP Product Range</label>
+        <select class="form-select" id="gen-product"></select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Region</label>
+        <select class="form-select" id="gen-region"></select>
+      </div>
+      <button class="form-submit" id="gen-submit" onclick="startGenerate()">Start Search</button>
+    </div>
+  </div>
+
+  <!-- ======== FIND SIMILAR ======== -->
+  <div class="screen" id="screen-similar">
+    <div class="form-wrap">
+      <button class="screen-back" onclick="goHome()">&larr; Back</button>
+      <div class="form-heading">Find Similar Companies</div>
+      <div class="form-sub">Give a reference company website and we will find UK companies with a similar profile.</div>
+      <div class="form-field">
+        <label class="form-label">Reference company website</label>
+        <input class="form-input" type="url" id="sim-url" placeholder="https://www.example.co.uk">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Keywords (comma separated)</label>
+        <input class="form-input" type="text" id="sim-keywords" placeholder="bespoke joinery, birch plywood">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Region</label>
+        <select class="form-select" id="sim-region"></select>
+      </div>
+      <button class="form-submit" id="sim-submit" onclick="startSimilar()">Find Similar</button>
+    </div>
+  </div>
+
+  <!-- ======== LOADING ======== -->
+  <div class="screen" id="screen-loading">
+    <div class="loading-wrap">
+      <div class="loading-spinner"></div>
+      <div class="loading-heading" id="loading-heading">Searching...</div>
+      <div class="loading-sub">This usually takes 2&ndash;4 minutes. Leads appear as soon as they are saved.</div>
+      <ul class="loading-steps">
+        <li class="loading-step" id="lstep-0"><span class="step-dot"></span> Reading customer and exclusion lists</li>
+        <li class="loading-step" id="lstep-1"><span class="step-dot"></span> Claude is searching the web</li>
+        <li class="loading-step" id="lstep-2"><span class="step-dot"></span> Verifying company websites</li>
+        <li class="loading-step" id="lstep-3"><span class="step-dot"></span> Saving and checking against BT customers</li>
+      </ul>
+      <div class="loading-cancel"><button class="btn-sm ghost" onclick="cancelWatch()">Hide &mdash; keep running in background</button></div>
+    </div>
+  </div>
+
+  <!-- ======== RESULTS ======== -->
+  <div class="screen" id="screen-results">
+    <div class="results-wrap">
+      <button class="screen-back" onclick="goHome()" style="margin-bottom:10px;">&larr; Back to Home</button>
+      <div class="results-head">
+        <div>
+          <div class="results-heading" id="results-heading">Results</div>
+          <div class="results-sub" id="results-sub"></div>
+        </div>
+        <div class="results-actions">
+          <button class="btn-sm ghost details-toggle" data-page="results" onclick="toggleCardDetails('results')">Details</button>
+          <button class="btn-sm ghost" onclick="refreshResults()">Refresh</button>
+          <button class="btn-sm" onclick="goTo('screen-generate')">New Search</button>
+        </div>
+      </div>
+      <div class="searching-banner" id="searching-banner"><span class="mini-spin"></span><span id="searching-msg">Search still running &mdash; new leads will appear automatically.</span></div>
+      <div class="card-grid" id="results-grid"></div>
+      <div class="empty-state" id="results-empty" style="display:none;">
+        <div class="empty-icon">&#128269;</div>
+        <div class="empty-msg" id="results-empty-msg">No leads in this session yet.</div>
+      </div>
+      <div class="more-wrap" id="more-wrap" style="display:none;">
+        <button class="btn-more" id="btn-more" onclick="searchMore()"><span class="mini-spin"></span> Find More Leads</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== MY CLAIMED ======== -->
+  <div class="screen" id="screen-claimed">
+    <div class="table-wrap">
+      <button class="screen-back" onclick="goHome()" style="margin-bottom:20px;">&larr; Back to Home</button>
+      <div class="results-head">
+        <div>
+          <div class="results-heading">My Claimed Leads</div>
+          <div class="results-sub" id="claimed-sub"></div>
+        </div>
+        <div class="results-actions">
+          <button class="btn-sm ghost details-toggle" data-page="claimed" onclick="toggleCardDetails('claimed')">Details</button>
+          <button class="btn-sm ghost" onclick="exportReport()">Export</button>
+          <button class="btn-sm ghost" onclick="openClaimed()">Refresh</button>
+          <button class="btn-sm" onclick="openCreateLead()">+ Add a lead</button>
+        </div>
+      </div>
+      <div class="lead-table" id="claimed-table"></div>
+      <div class="empty-state" id="claimed-empty" style="display:none;">
+        <div class="empty-icon">&#128203;</div>
+        <div class="empty-msg">You have no claimed leads yet. Claim one from a search.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== TBC / REVIEW QUEUE ======== -->
+  <div class="screen" id="screen-tbc">
+    <div class="results-wrap">
+      <button class="screen-back" onclick="goHome()" style="margin-bottom:10px;">&larr; Back to Home</button>
+      <div class="results-head">
+        <div>
+          <div class="results-heading" id="tbc-heading">Review Queue</div>
+          <div class="results-sub" id="tbc-sub">Leads nobody has actioned yet, newest first.</div>
+        </div>
+        <div class="results-actions">
+          <button class="btn-sm ghost details-toggle" data-page="tbc" onclick="toggleCardDetails('tbc')">Details</button>
+          <button class="btn-sm ghost" onclick="exportReport('tbc')">Export</button>
+          <button class="btn-sm ghost" onclick="openTBC(tbcMode)">Refresh</button>
+        </div>
+      </div>
+      <div class="card-grid" id="tbc-grid"></div>
+      <div class="empty-state" id="tbc-empty" style="display:none;">
+        <div class="empty-icon">&#9989;</div>
+        <div class="empty-msg">Queue is clear &mdash; every lead has been actioned.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== PREVIOUS SEARCHES ======== -->
+  <div class="screen" id="screen-prevsearch">
+    <div class="table-wrap">
+      <button class="screen-back" onclick="goHome()" style="margin-bottom:20px;">&larr; Back to Home</button>
+      <div class="results-head">
+        <div>
+          <div class="results-heading">Previous Searches</div>
+          <div class="results-sub" id="prev-sub"></div>
+        </div>
+        <div class="results-actions">
+          <button class="btn-sm ghost" onclick="openPrevSearches()">Refresh</button>
+        </div>
+      </div>
+      <div class="lead-table" id="prev-table"></div>
+      <div class="empty-state" id="prev-empty" style="display:none;">
+        <div class="empty-icon">&#128269;</div>
+        <div class="empty-msg">No searches yet &mdash; your completed searches will appear here.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-footer">SPP Lead Generator &middot; web v1.1</div>
+</div>
+
+<!-- ======== LEAD MODAL ======== -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-top">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" onclick="closeModal()">&#10005;</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ======== CONFIRM / REASON DIALOG ======== -->
+<div class="edit-overlay" id="edit-overlay" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-modal">
+    <div class="edit-modal-top">
+      <div class="edit-modal-title" id="edit-modal-title"></div>
+      <button class="modal-close" onclick="closeEditModal()">&#10005;</button>
+    </div>
+    <div class="edit-modal-sub" id="edit-modal-sub"></div>
+    <div id="edit-modal-body"></div>
+  </div>
+</div>
+
+<div class="edit-overlay" id="create-lead-overlay" onclick="if(event.target===this)closeCreateLead()">
+  <div class="edit-modal" style="max-width:560px;">
+    <div class="edit-modal-top">
+      <div class="edit-modal-title">Add a lead</div>
+      <button class="modal-close" onclick="closeCreateLead()">&#10005;</button>
+    </div>
+    <div class="edit-modal-sub">Add a company you have found elsewhere. It will be checked for duplicates and claimed to you.</div>
+    <div id="create-lead-dup" style="display:none;"></div>
+    <div id="create-lead-body" class="create-lead-form"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="dialog-overlay">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-title" id="dialog-title" style="font-size:18px;"></div>
+    <div class="card-desc" id="dialog-msg" style="margin-top:10px;"></div>
+    <div id="dialog-extra" style="margin-top:16px;"></div>
+    <div class="dialog-actions">
+      <button class="btn-sm ghost" id="dialog-cancel">Cancel</button>
+      <button class="btn-danger" id="dialog-confirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+/* ---- Bold Mode ---- */
+function toggleBoldMode(on) {
+  document.body.classList.toggle('bold-mode', on);
+  try { localStorage.setItem('spp-bold-mode', on ? '1' : '0'); } catch(e) {}
+}
+(function() {
+  try {
+    if (localStorage.getItem('spp-bold-mode') === '1') {
+      document.body.classList.add('bold-mode');
+      var cb = document.getElementById('bold-mode-toggle');
+      if (cb) cb.checked = true;
+    }
+  } catch(e) {}
+})();
+
+/* =====================================================================
+   SPP Lead Generator - web v1.0
+   Backend: Azure Function proxy -> Power Automate flows -> SharePoint
+   ===================================================================== */
+
+const CONFIG = {
+  TENANT_ID: 'a043bfcb-213f-4b14-8ffa-4a8e6cf7d1c4',
+  CLIENT_ID: '7fa65e14-c68e-49dd-a7dd-3fc185890202',
+  REDIRECT_URI: 'https://spp-richard.github.io/spp-leads/',
+  SCOPE: 'api://7fa65e14-c68e-49dd-a7dd-3fc185890202/access_as_user',
+  PROXY: 'https://spp-leadgen-proxy-fbcagyawazafcthx.westeurope-01.azurewebsites.net/api/proxy',
+  POLL_MS: 10000,          // poll interval while a search runs
+  POLL_MAX_MS: 330000,     // give up watching after 5.5 minutes
+  STABLE_POLLS: 2          // result count unchanged this many polls = search finished
+};
+
+/* ---------------- preview / demo mode ---------------- */
+var PREVIEW = (typeof PREVIEW_MODE !== 'undefined' && PREVIEW_MODE) || /[?&#]preview/.test(window.location.href);
+if (PREVIEW) {
+  var DEMO_LEADS = [
+    { Id:1, Title:'Acme Joinery Ltd', Location:'Manchester', Sector:'Joinery & Shopfitting', Description:'Large commercial joinery firm specialising in retail and hospitality fit-outs across the North West. Operates a 25,000 sq ft workshop with CNC capability.', SPPProductHook:'High user of birch plywood for shopfitting carcasses and display units. Contra-Burn treated boards for hotel and restaurant projects.', WebsiteURL:'https://www.example-acme.co.uk', EmailDomain:'example-acme.co.uk', ContactName:'James Wilson', ContactRole:'Purchasing Manager', PhoneNumber:'0161 234 5678', CompanyPhoneNumber:'0161 200 1000', ContactEmail:'james.wilson@example-acme.co.uk', BTMatch:'None', BTMatchCount:'0', Industry:'Joinery & Shopfitting', ProductRange:'Birch Plywood', Region:'North West', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', confidence_score:82, CreditStatus:'matched', CreditScore:'72', CreditRiskBand:'Low Risk', CreditLimit:'125000', ShareholderFunds:'450000', WorkingCapital:'82000', CreditPullDate:new Date().toISOString(), CreditConnectId:'GB-0-12345678' },
+    { Id:2, Title:'Northern Stage Sets', Location:'Leeds', Sector:'Set Building & Events', Description:'Theatrical and event set builders working with major venues across Yorkshire. Known for large-scale temporary structures and exhibition stands.', SPPProductHook:'Pine plywood for lightweight scenic flats and temporary structures. Contra-Burn essential for public venue fire compliance.', WebsiteURL:'https://www.example-northern.co.uk', EmailDomain:'example-northern.co.uk', ContactName:'Sarah Patel', ContactRole:'Operations Director', PhoneNumber:'0113 987 6543', CompanyPhoneNumber:'0113 987 0000', ContactEmail:'sarah@example-northern.co.uk', BTMatch:'Possible', BTMatchCount:'1', BTStatus:'Active', BTRep:'John Smith', Industry:'Set Building & Events', ProductRange:'Pine Plywood', Region:'Yorkshire', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'Good', confidence_score:75 },
+    { Id:3, Title:'Precision Pods Manufacturing', Location:'Birmingham', Sector:'Modular Construction', Description:'Off-site modular bathroom and kitchen pod manufacturer supplying major housebuilders. ISO 9001 certified with capacity for 50 pods per week.', SPPProductHook:'Phenol-faced boards for moisture-resistant pod flooring and wall linings. Birch ply for structural elements.', WebsiteURL:'https://www.example-pods.co.uk', EmailDomain:'example-pods.co.uk', ContactName:'', ContactRole:'', PhoneNumber:'0121 456 7890', CompanyPhoneNumber:'0121 456 0000', ContactEmail:'', BTMatch:'None', BTMatchCount:'0', Industry:'Modular Construction', ProductRange:'Phenol Faced Boards', Region:'West Midlands', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', confidence_score:88, CreditStatus:'ambiguous', CreditCandidates:'[{"id":"GB-0-11111111","name":"Precision Pods Ltd","regNo":"11111111","type":"Ltd","address":{"simpleValue":"Birmingham"}},{"id":"GB-0-22222222","name":"Precision Pods Manufacturing Ltd","regNo":"22222222","type":"Ltd","address":{"simpleValue":"West Midlands"}}]' },
+    { Id:4, Title:'Heritage Boat Builders', Location:'Southampton', Sector:'Marine & Boatbuilding', Description:'Specialist wooden boat restoration and new-build yard. Works with classic yacht owners and heritage trusts on vessels up to 60ft.', SPPProductHook:'Marine-grade birch plywood for hull linings, bulkheads and cabin furniture. Veneered panels for interior finishing.', WebsiteURL:'https://www.example-boats.co.uk', EmailDomain:'example-boats.co.uk', ContactName:'David Chen', ContactRole:'Yard Manager', PhoneNumber:'', CompanyPhoneNumber:'023 8045 6789', ContactEmail:'david.chen@example-boats.co.uk', BTMatch:'Confirmed', BTMatchCount:'1', BTStatus:'Active', BTRep:'Richard Claridge', BTLastNote:'Good account, orders quarterly', Industry:'Marine & Boatbuilding', ProductRange:'Birch Plywood', Region:'South East', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', ClaimedBy:'demo@spp.co.uk', ClaimedDate:new Date().toISOString(), confidence_score:71 },
+    { Id:5, Title:'Greenfield Acoustics', Location:'Bristol', Sector:'Acoustic Solutions', Description:'Designs and installs acoustic wall and ceiling panels for offices, studios and educational buildings. Growing fast with recent contracts for university lecture halls.', SPPProductHook:'Birch plywood as substrate for perforated acoustic panels. Contra-Burn treated boards for education sector fire compliance.', WebsiteURL:'https://www.example-acoustics.co.uk', EmailDomain:'example-acoustics.co.uk', ContactName:'Emma Brooks', ContactRole:'Technical Director', PhoneNumber:'0117 321 0000', CompanyPhoneNumber:'0117 321 0001', ContactEmail:'emma@example-acoustics.co.uk', BTMatch:'None', BTMatchCount:'0', Industry:'Acoustic Solutions', ProductRange:'Birch Plywood', Region:'South West', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', TBCBy:'demo@spp.co.uk', confidence_score:79, CreditStatus:'none' }
+  ];
+}
+
+/* ---------------- state ---------------- */
+let msalInstance = null;
+let account = null;
+let ME = { email: '', name: '' };
+let userMap = {};            // lowercase email -> display name (from Dropdown_Options "UserDisplay" rows)
+let dropdowns = { Industry: [], ProductRange: [], Region: [], RejectReason: [] };
+const FALLBACK_REJECT_REASONS = ['Closed', 'Too small', 'Too big', 'Does not buy our products', 'Is an ass'];
+let sessionRows = [];        // rows of the session currently shown on Results
+let currentSession = null;
+let currentSessionLabel = '';
+let lastSearchParams = null;
+let watchTimer = null;
+let watchStart = 0;
+let watchLastCount = -1;
+let watchStableFor = 0;
+let claimedRows = [];
+let tbcRows = [];
+
+/* ---------------- utils ---------------- */
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return esc(iso);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function nowISO() { return new Date().toISOString(); }
+function displayName(v) {
+  if (!v) return '';
+  const key = String(v).toLowerCase().trim();
+  if (userMap[key]) return userMap[key];
+  if (key.includes('@')) {
+    const p = key.split('@')[0];
+    return p.charAt(0).toUpperCase() + p.slice(1);
+  }
+  return v;
+}
+function hostOf(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return url; }
+}
+function toast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.className = 'toast'; }, 3200);
+}
+
+/* ---------------- auth ---------------- */
+function initMsal() {
+  if (PREVIEW) {
+    ME = { email: 'demo@spp.co.uk', name: 'Preview User' };
+    account = { username: 'demo@spp.co.uk', name: 'Preview User' };
+    var ss = document.getElementById('screen-signin');
+    if (ss) { ss.classList.remove('active'); ss.style.display = 'none'; }
+    document.getElementById('app-shell').style.display = 'block';
+    try { bootApp(); } catch(e) { console.error('Preview bootApp error:', e); }
+    return;
+  }
+  msalInstance = new msal.PublicClientApplication({
+    auth: {
+      clientId: CONFIG.CLIENT_ID,
+      authority: 'https://login.microsoftonline.com/' + CONFIG.TENANT_ID,
+      redirectUri: CONFIG.REDIRECT_URI
+    },
+    cache: { cacheLocation: 'localStorage' }
+  });
+  const accounts = msalInstance.getAllAccounts();
+  if (accounts.length > 0) { account = accounts[0]; onSignedIn(); }
+}
+async function signIn() {
+  if (PREVIEW) { initMsal(); return; }
+  const errBox = document.getElementById('signin-error');
+  errBox.style.display = 'none';
+  try {
+    const resp = await msalInstance.loginPopup({ scopes: ['User.Read'] });
+    account = resp.account;
+    onSignedIn();
+  } catch (e) {
+    errBox.textContent = 'Sign-in failed: ' + e.message;
+    errBox.style.display = 'block';
+  }
+}
+async function signOut() {
+  try { await msalInstance.logoutPopup({ account: account }); } catch (e) {}
+  location.reload();
+}
+async function getToken() {
+  try {
+    const r = await msalInstance.acquireTokenSilent({ account: account, scopes: [CONFIG.SCOPE] });
+    return r.accessToken;
+  } catch (e) {
+    const r = await msalInstance.acquireTokenPopup({ account: account, scopes: [CONFIG.SCOPE] });
+    return r.accessToken;
+  }
+}
+function onSignedIn() {
+  ME.email = account.username || '';
+  ME.name = account.name || ME.email;
+  document.getElementById('screen-signin').classList.remove('active');
+  document.getElementById('app-shell').style.display = 'block';
+  document.getElementById('user-name').textContent = ME.name;
+  bootApp();
+}
+
+/* ---------------- API ---------------- */
+async function api(target, payload) {
+  if (PREVIEW) return previewApi(target, payload);
+  const token = await getToken();
+  const res = await fetch(CONFIG.PROXY, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ target: target, payload: payload || {} })
+  });
+  let data = null;
+  try { data = await res.json(); } catch (e) { data = null; }
+  if (!res.ok) throw new Error((data && (data.error || data.message)) || ('HTTP ' + res.status));
+  if (data && data.error) throw new Error(data.error);
+  return data;
+}
+function previewApi(target, payload) {
+  var p = payload || {};
+  var action = p.action || '';
+  // Dropdown options for boot
+  if (action === 'getDropdowns') {
+    return { value: [
+      { Title:'Joinery & Shopfitting', OptionType:'Industry', IsActive:'Yes', SortOrder:1 },
+      { Title:'Set Building & Events', OptionType:'Industry', IsActive:'Yes', SortOrder:2 },
+      { Title:'Modular Construction', OptionType:'Industry', IsActive:'Yes', SortOrder:3 },
+      { Title:'Marine & Boatbuilding', OptionType:'Industry', IsActive:'Yes', SortOrder:4 },
+      { Title:'Acoustic Solutions', OptionType:'Industry', IsActive:'Yes', SortOrder:5 },
+      { Title:'Birch Plywood', OptionType:'ProductRange', IsActive:'Yes', SortOrder:1 },
+      { Title:'Pine Plywood', OptionType:'ProductRange', IsActive:'Yes', SortOrder:2 },
+      { Title:'Phenol Faced Boards', OptionType:'ProductRange', IsActive:'Yes', SortOrder:3 },
+      { Title:'Veneered Panels', OptionType:'ProductRange', IsActive:'Yes', SortOrder:4 },
+      { Title:'Contra-Burn', OptionType:'ProductRange', IsActive:'Yes', SortOrder:5 },
+      { Title:'North West', OptionType:'Region', IsActive:'Yes', SortOrder:1 },
+      { Title:'Yorkshire', OptionType:'Region', IsActive:'Yes', SortOrder:2 },
+      { Title:'West Midlands', OptionType:'Region', IsActive:'Yes', SortOrder:3 },
+      { Title:'South East', OptionType:'Region', IsActive:'Yes', SortOrder:4 },
+      { Title:'South West', OptionType:'Region', IsActive:'Yes', SortOrder:5 },
+      { Title:'London', OptionType:'Region', IsActive:'Yes', SortOrder:6 },
+      { Title:'Scotland', OptionType:'Region', IsActive:'Yes', SortOrder:7 },
+      { Title:'UK - National (any location)', OptionType:'Region', IsActive:'Yes', SortOrder:8 },
+      { Title:'Too small', OptionType:'RejectReason', IsActive:'Yes', SortOrder:1 },
+      { Title:'Does not buy our products', OptionType:'RejectReason', IsActive:'Yes', SortOrder:2 },
+      { Title:'Closed', OptionType:'RejectReason', IsActive:'Yes', SortOrder:3 },
+      { Title:'demo@spp.co.uk|Preview User', OptionType:'UserDisplay' },
+      { Title:'richard@spp.co.uk|Richard Claridge', OptionType:'UserDisplay' }
+    ]};
+  }
+  // Home stats
+  if (action === 'getMyStats') {
+    return { value: [{ ClaimedCount: 1, TBCCount: 1 }] };
+  }
+  if (action === 'getTBCCount') {
+    return { value: [{ TBCTotal: 3 }] };
+  }
+  // Recent searches for home sidebar
+  if (action === 'getRecentLeads' || action === 'getRecentSearches') {
+    return { value: DEMO_LEADS };
+  }
+  // Leads for a session
+  if (action === 'getLeads') {
+    return { value: DEMO_LEADS.filter(function(r) { return !r.ClaimedBy && !r.RejectedBy && !r.TBCBy; }) };
+  }
+  // Claimed leads
+  if (action === 'getClaimed') {
+    return { value: DEMO_LEADS.filter(function(r) { return r.ClaimedBy; }) };
+  }
+  // TBC leads
+  if (action === 'getTBC') {
+    return { value: DEMO_LEADS.filter(function(r) { return r.TBCBy; }) };
+  }
+  // Actions (claim, reject, tbc, etc) - just toast and no-op
+  if (action === 'checkDuplicate') {
+    var cn = (p.companyName || '').toLowerCase();
+    var cw = normaliseUrl(p.websiteUrl || '');
+    var matches = DEMO_LEADS.filter(function(d) {
+      return d.Title.toLowerCase() === cn || normaliseUrl(d.WebsiteURL) === cw;
+    });
+    return { value: matches };
+  }
+  if (action === 'createLead') {
+    var nl = Object.assign({ Id: 900 + DEMO_LEADS.length }, p.fields || {});
+    DEMO_LEADS.push(nl);
+    return { ok: true };
+  }
+  if (action === 'claimLead' || action === 'rejectLead' || action === 'tbcLead' || action === 'unclaimLead' || action === 'updateLead' || action === 'addNote') {
+    return { ok: true };
+  }
+  // Generate / similar - return a fake session ID
+  if (target === 'generate' || target === 'similar') {
+    return { sessionid: 'preview-session-' + Date.now() };
+  }
+  return {};
+}
+const dataApi = (action, extra) => api('data', Object.assign({ action: action }, extra || {}));
+
+/* ---------------- boot ---------------- */
+async function bootApp() {
+  goTo('screen-home');
+  try {
+    const dd = await dataApi('getDropdowns');
+    const rows = (dd && dd.value) || [];
+    dropdowns = { Industry: [], ProductRange: [], Region: [], RejectReason: [] };
+    userMap = {};
+    rows.forEach(r => {
+      if (!r.Title || !r.OptionType) return;
+      if (r.OptionType === 'UserDisplay') {
+        const parts = r.Title.split('|');
+        if (parts.length === 2) userMap[parts[0].toLowerCase().trim()] = parts[1].trim();
+        return;
+      }
+      if (r.IsActive !== 'Yes') return;
+      if (dropdowns[r.OptionType]) dropdowns[r.OptionType].push(r);
+    });
+    Object.keys(dropdowns).forEach(k => dropdowns[k].sort((a, b) => (a.SortOrder || 0) - (b.SortOrder || 0)));
+    fillSelect('gen-industry', dropdowns.Industry);
+    fillSelect('gen-product', dropdowns.ProductRange);
+    fillSelect('gen-region', dropdowns.Region);
+    fillSelect('sim-region', dropdowns.Region);
+    restoreLastCriteria();
+    document.getElementById('user-name').textContent = displayName(ME.email);
+  } catch (e) {
+    toast('Could not load options: ' + e.message, true);
+  }
+  updateDetailsBtns();
+  loadHome();
+}
+function fillSelect(id, rows) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = rows.map(r => '<option value="' + esc(r.Title) + '">' + esc(r.Title) + '</option>').join('');
+}
+function restoreLastCriteria() {
+  try {
+    const last = JSON.parse(localStorage.getItem('spp-last-criteria') || '{}');
+    ['gen-industry', 'gen-product', 'gen-region'].forEach(id => {
+      if (last[id]) { const el = document.getElementById(id); if ([...el.options].some(o => o.value === last[id])) el.value = last[id]; }
+    });
+  } catch (e) {}
+}
+
+/* ---------------- navigation ---------------- */
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.nav === id));
+  window.scrollTo(0, 0);
+}
+function goHome() { goTo('screen-home'); loadHome(); }
+
+/* ---------------- home: recent searches + stats ---------------- */
+async function loadHome() {
+  try {
+    const [recent, tbc, claimed] = await Promise.all([
+      dataApi('getRecentSearches'),
+      dataApi('getTBC'),
+      dataApi('getClaimed')
+    ]);
+    tbcRows = (tbc && tbc.value) || [];
+    claimedRows = (claimed && claimed.value) || [];
+    document.getElementById('stat-tbc').textContent = tbcRows.filter(r => !r.TBCBy).length;
+    document.getElementById('stat-mytbc').textContent = tbcRows.filter(r => r.TBCBy && String(r.TBCBy).toLowerCase() === ME.email.toLowerCase()).length;
+    document.getElementById('stat-claimed').textContent = claimedRows.length;
+    renderRecent((recent && recent.value) || []);
+  } catch (e) {
+    document.getElementById('recent-list').innerHTML = '<div class="recent-empty">Could not load: ' + esc(e.message) + '</div>';
+  }
+}
+function groupSessions(rows) {
+  const bySession = {};
+  rows.forEach(r => {
+    if (!r.SearchSession) return;
+    if (!bySession[r.SearchSession]) bySession[r.SearchSession] = { rows: [], maxId: 0 };
+    bySession[r.SearchSession].rows.push(r);
+    if (r.Id > bySession[r.SearchSession].maxId) bySession[r.SearchSession].maxId = r.Id;
+  });
+  return Object.entries(bySession).sort((a, b) => b[1].maxId - a[1].maxId);
+}
+function sessionLabel(f) {
+  if (f.Industry && String(f.Industry).startsWith('http')) return 'Similar to ' + esc(hostOf(f.Industry));
+  return esc(f.Industry || '?') + ' &middot; ' + esc(f.ProductRange || '?') + ' &middot; ' + esc(f.Region || '?');
+}
+function renderRecent(rows) {
+  const sessions = groupSessions(rows).slice(0, 12);
+  const el = document.getElementById('recent-list');
+  if (sessions.length === 0) { el.innerHTML = '<div class="recent-empty">No searches yet. Your searches will appear here.</div>'; return; }
+  el.innerHTML = sessions.map(([sid, s]) => {
+    const f = s.rows[0];
+    const actioned = s.rows.filter(r => r.ClaimedBy || r.RejectedBy || r.TBCBy).length;
+    return '<div class="recent-item" onclick="openSession(\'' + encodeURIComponent(sid) + '\', this)">' +
+      '<div class="recent-crit">' + sessionLabel(f) + '</div>' +
+      '<div class="recent-meta">' + s.rows.length + ' lead' + (s.rows.length === 1 ? '' : 's') + ' &middot; ' + actioned + ' actioned &middot; ' + fmtDate(f.GeneratedDate) + '</div></div>';
+  }).join('');
+}
+async function openPrevSearches() {
+  goTo('screen-prevsearch');
+  document.getElementById('prev-sub').textContent = 'Loading...';
+  try {
+    const r = await dataApi('getRecentSearches');
+    const sessions = groupSessions((r && r.value) || []);
+    document.getElementById('prev-sub').textContent = sessions.length + ' search' + (sessions.length === 1 ? '' : 'es') + ' by ' + displayName(ME.email) + ', newest first.';
+    document.getElementById('prev-empty').style.display = sessions.length ? 'none' : 'block';
+    document.getElementById('prev-table').style.display = sessions.length ? 'block' : 'none';
+    const cols = '2.6fr 1fr 0.8fr 0.8fr';
+    document.getElementById('prev-table').innerHTML =
+      '<div class="table-head" style="grid-template-columns:' + cols + ';"><div>Search</div><div>Date</div><div>Leads</div><div>Actioned</div></div>' +
+      sessions.map(([sid, s]) => {
+        const f = s.rows[0];
+        const actioned = s.rows.filter(x => x.ClaimedBy || x.RejectedBy || x.TBCBy).length;
+        return '<div class="table-row" style="grid-template-columns:' + cols + ';" onclick="openSession(\'' + encodeURIComponent(sid) + '\')">' +
+          '<div class="row-name">' + sessionLabel(f) + '</div>' +
+          '<div class="row-dim">' + fmtDate(f.GeneratedDate) + '</div>' +
+          '<div class="row-dim">' + s.rows.length + '</div>' +
+          '<div class="row-dim">' + actioned + '</div></div>';
+      }).join('');
+  } catch (e) { toast('Could not load searches: ' + e.message, true); }
+}
+async function openSession(encodedSid, elOrLabel) {
+  const sid = decodeURIComponent(encodedSid);
+  currentSession = sid;
+  currentSessionLabel = '';
+  stopWatch();
+  goTo('screen-results');
+  document.getElementById('results-heading').textContent = 'Results';
+  document.getElementById('results-sub').textContent = 'Loading session...';
+  document.getElementById('results-grid').innerHTML = '';
+  document.getElementById('results-empty').style.display = 'none';
+  document.getElementById('more-wrap').style.display = 'none';
+  lastSearchParams = null;
+  await refreshResults();
+}
+
+/* ---------------- search: generate / similar ---------------- */
+async function startGenerate() {
+  const industry = document.getElementById('gen-industry').value;
+  const product = document.getElementById('gen-product').value;
+  const region = document.getElementById('gen-region').value;
+  if (!industry || !product || !region) { toast('Pick all three criteria first.', true); return; }
+  localStorage.setItem('spp-last-criteria', JSON.stringify({ 'gen-industry': industry, 'gen-product': product, 'gen-region': region }));
+  const btn = document.getElementById('gen-submit');
+  btn.disabled = true; btn.textContent = 'Starting...';
+  try {
+    const r = await api('generate', { text: industry, text_1: product, text_2: region });
+    lastSearchParams = { type: 'generate', text: industry, text_1: product, text_2: region };
+    startWatch(r.sessionid, industry + ' / ' + product + ' / ' + region);
+  } catch (e) {
+    toast('Could not start search: ' + e.message, true);
+  }
+  btn.disabled = false; btn.textContent = 'Start Search';
+}
+async function startSimilar() {
+  const url = document.getElementById('sim-url').value.trim();
+  const kw = document.getElementById('sim-keywords').value.trim();
+  const region = document.getElementById('sim-region').value;
+  if (!url || !url.startsWith('http')) { toast('Enter the full website address including https://', true); return; }
+  const btn = document.getElementById('sim-submit');
+  btn.disabled = true; btn.textContent = 'Starting...';
+  try {
+    const r = await api('similar', { text: url, text_1: kw, text_2: region });
+    lastSearchParams = { type: 'similar', text: url, text_1: kw, text_2: region };
+    startWatch(r.sessionid, 'Similar to ' + hostOf(url));
+  } catch (e) {
+    toast('Could not start search: ' + e.message, true);
+  }
+  btn.disabled = false; btn.textContent = 'Find Similar';
+}
+
+/* ---------------- watch: poll the session until the flow finishes ---------------- */
+function startWatch(sessionId, label) {
+  currentSession = sessionId;
+  currentSessionLabel = label;
+  sessionRows = [];
+  watchStart = Date.now();
+  watchLastCount = -1;
+  watchStableFor = 0;
+  goTo('screen-loading');
+  document.getElementById('loading-heading').textContent = label;
+  updateLoadingSteps();
+  stopWatch();
+  watchTimer = setInterval(watchTick, CONFIG.POLL_MS);
+  setTimeout(watchTick, 4000);
+}
+function stopWatch() { if (watchTimer) { clearInterval(watchTimer); watchTimer = null; } }
+function cancelWatch() {
+  // Search keeps running server-side; the session stays reachable via Recent Searches.
+  stopWatch();
+  toast('Search continues in the background. Check Recent Searches in a few minutes.');
+  goHome();
+}
+function updateLoadingSteps() {
+  const sec = (Date.now() - watchStart) / 1000;
+  const stage = sec < 15 ? 0 : sec < 110 ? 1 : sec < 170 ? 2 : 3;
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('lstep-' + i);
+    el.className = 'loading-step' + (i < stage ? ' done' : i === stage ? ' active' : '');
+  }
+}
+async function watchTick() {
+  updateLoadingSteps();
+  const elapsed = Date.now() - watchStart;
+  let rows = [];
+  try {
+    const r = await dataApi('getLeads', { sessionId: currentSession });
+    rows = (r && r.value) || [];
+  } catch (e) { /* transient poll errors are fine; try again next tick */ }
+
+  if (rows.length > 0) {
+    sessionRows = rows;
+    if (document.getElementById('screen-loading').classList.contains('active')) {
+      goTo('screen-results');
+    }
+    renderResults();
+    if (rows.length === watchLastCount) {
+      watchStableFor++;
+      if (watchStableFor >= CONFIG.STABLE_POLLS) { finishWatch(true); return; }
+    } else {
+      watchStableFor = 0;
+    }
+    watchLastCount = rows.length;
+  }
+  if (elapsed > CONFIG.POLL_MAX_MS) finishWatch(rows.length > 0);
+}
+function finishWatch(found) {
+  stopWatch();
+  document.getElementById('searching-banner').style.display = 'none';
+  if (found) {
+    toast('Search complete - ' + sessionRows.length + ' lead' + (sessionRows.length === 1 ? '' : 's') + '.');
+    renderResults();
+    showMoreBtn(true);
+  } else {
+    goTo('screen-results');
+    document.getElementById('results-heading').textContent = currentSessionLabel || 'Results';
+    document.getElementById('results-sub').textContent = '';
+    document.getElementById('results-empty').style.display = 'block';
+    document.getElementById('results-empty-msg').textContent = 'Nothing saved yet. The search may still be finishing - try Refresh in a minute, or it found no verifiable leads.';
+  }
+}
+
+/* ---------------- results rendering ---------------- */
+async function refreshResults() {
+  if (!currentSession) return;
+  try {
+    const r = await dataApi('getLeads', { sessionId: currentSession });
+    sessionRows = (r && r.value) || [];
+    renderResults();
+  } catch (e) { toast('Refresh failed: ' + e.message, true); }
+}
+
+function showMoreBtn(enabled) {
+  var wrap = document.getElementById('more-wrap');
+  var btn = document.getElementById('btn-more');
+  if (!lastSearchParams) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  btn.disabled = !enabled;
+  btn.innerHTML = enabled ? '<span class="mini-spin"></span> Find More Leads' : '<span class="mini-spin"></span> Searching…';
+}
+
+var moreSearchRunning = false;
+async function searchMore() {
+  if (!lastSearchParams || moreSearchRunning) return;
+  moreSearchRunning = true;
+  showMoreBtn(false);
+  var baseCount = sessionRows.length;
+  try {
+    var endpoint = lastSearchParams.type === 'similar' ? 'similar' : 'generate';
+    var payload = { text: lastSearchParams.text, text_1: lastSearchParams.text_1, text_2: lastSearchParams.text_2, text_3: currentSession };
+    var r = await api(endpoint, payload);
+    var lastCount = -1;
+    var stableFor = 0;
+    var pollCount = 0;
+    await new Promise(function(resolve) {
+      var timer = setInterval(function() {
+        pollCount++;
+        dataApi('getLeads', { sessionId: currentSession }).then(function(res) {
+          var rows = (res && res.value) || [];
+          var count = rows.length;
+          if (count > baseCount && count === lastCount) {
+            stableFor++;
+          } else {
+            stableFor = 0;
+          }
+          lastCount = count;
+          if ((count > baseCount && stableFor >= CONFIG.STABLE_POLLS) || pollCount > 33) {
+            clearInterval(timer);
+            var added = count - baseCount;
+            sessionRows = rows;
+            renderResults();
+            if (added > 0) {
+              toast(added + ' more lead' + (added === 1 ? '' : 's') + ' added.');
+            } else {
+              toast('No additional leads found this round.', true);
+            }
+            resolve();
+          }
+        }).catch(function() {
+          if (pollCount > 33) { clearInterval(timer); toast('Search timed out.', true); resolve(); }
+        });
+      }, CONFIG.POLL_MS);
+    });
+  } catch(e) {
+    toast('Could not start search: ' + e.message, true);
+  }
+  moreSearchRunning = false;
+  showMoreBtn(true);
+}
+function renderResults() {
+  const grid = document.getElementById('results-grid');
+  const f = sessionRows[0];
+  let label = currentSessionLabel;
+  if (!label && f) {
+    label = (f.Industry && String(f.Industry).startsWith('http')) ? ('Similar to ' + hostOf(f.Industry)) : [f.Industry, f.ProductRange, f.Region].filter(Boolean).join(' / ');
+  }
+  document.getElementById('results-heading').textContent = label || 'Results';
+  document.getElementById('results-sub').textContent = sessionRows.length + ' lead' + (sessionRows.length === 1 ? '' : 's') + (f ? ' - generated ' + fmtDate(f.GeneratedDate) + ' by ' + displayName(f.GeneratedBy) : '');
+  document.getElementById('searching-banner').style.display = watchTimer ? 'flex' : 'none';
+  if (!watchTimer && sessionRows.length > 0 && lastSearchParams) document.getElementById('more-wrap').style.display = 'block';
+  document.getElementById('results-empty').style.display = sessionRows.length === 0 ? 'block' : 'none';
+  grid.innerHTML = sessionRows.slice().sort((a, b) => a.Id - b.Id).map(r => cardHTML(r, 'results')).join('');
+}
+
+function cardDetailsOpen(page) { return (localStorage.getItem('spp-card-details-' + (page || 'results')) || 'open') !== 'closed'; }
+function toggleCardDetails(page) {
+  localStorage.setItem('spp-card-details-' + page, cardDetailsOpen(page) ? 'closed' : 'open');
+  updateDetailsBtns();
+  if (page === 'results') renderResults();
+  if (page === 'tbc' && document.getElementById('screen-tbc').classList.contains('active')) renderTBC();
+  if (page === 'claimed' && document.getElementById('screen-claimed').classList.contains('active')) renderClaimed();
+}
+function updateDetailsBtns() {
+  document.querySelectorAll('.details-toggle').forEach(b => { b.textContent = cardDetailsOpen(b.dataset.page) ? 'Details: always shown' : 'Details: click to open'; });
+}
+function detailBits(r, page) {
+  var d = r.Description ? '<details class="collapse"' + (cardDetailsOpen(page) ? ' open' : '') + '><summary>Description</summary><div class="card-desc" style="padding-bottom:8px;">' + esc(r.Description) + '</div></details>' : '';
+  var h = r.SPPProductHook ? '<details class="collapse"' + (cardDetailsOpen(page) ? ' open' : '') + '><summary>SPP angle</summary><div class="card-hook" style="margin-bottom:8px;">' + esc(r.SPPProductHook) + '</div></details>' : '';
+  var f = (r.CreditStatus === 'matched' && r.CreditScore) ? '<details class="collapse"' + (cardDetailsOpen(page) ? ' open' : '') + '><summary>Financials</summary>' + creditMatchedHTML(r) + '</details>' : '';
+  if (!d && !h && !f) return '';
+  return '<div class="detail-pair">' + d + h + f + '</div>';
+}
+function statusOf(r) {
+  if (r.RejectedBy) return 'rejected';
+  if (r.ClaimedBy) return 'claimed';
+  if (r.TBCBy) return 'tbc';
+  return 'open';
+}
+function btBadge(r) {
+  const count = parseInt(r.BTMatchCount || '0', 10) || 0;
+  const problem = r.BTProblemCustomer === true || r.BTProblemCustomer === 'true' || r.BTProblemCustomer === '1';
+  let h = '';
+  if (count > 1) {
+    h += '<span class="badge b-amber">' + count + ' possible BT matches</span>';
+  } else if (r.BTMatch === 'Confirmed') {
+    h += '<span class="badge b-green">BT customer</span>';
+  } else if (r.BTMatch && r.BTMatch !== 'None' && r.BTMatch !== '') {
+    h += '<span class="badge b-amber">Possible BT match</span>';
+  } else {
+    h += '<span class="badge b-grey">New prospect</span>';
+  }
+  if (problem) h += '<span class="badge b-red">Problem customer flag</span>';
+  return h;
+}
+function urlBadge(r) {
+  if (r.URLStatus === 'uncertain') return '<span class="badge b-amber" title="The site did not answer our automatic check - open it yourself before contacting">Website unverified - check</span>';
+  if (r.URLStatus === 'live' || !r.URLStatus) return '<span class="badge b-green">Website verified</span>';
+  return '<span class="badge b-red">Website dead</span>';
+}
+function btInfo(r) {
+  if (!r.BTMatch || r.BTMatch === 'None') return '';
+  const bits = [];
+  if (r.BTStatus) bits.push('Status: <strong>' + esc(r.BTStatus) + '</strong>');
+  if (r.BTRep) bits.push('Rep: <strong>' + esc(displayName(r.BTRep)) + '</strong>');
+  if (r.BTLastNote) bits.push('Last note: ' + esc(r.BTLastNote));
+  if (r.BTNotepadCount) bits.push(esc(String(r.BTNotepadCount)) + ' notes');
+  if (bits.length === 0) return '';
+  const caveat = (parseInt(r.BTMatchCount || '0', 10) > 1) ? ' <em>(first of several matches - click the badge to compare)</em>' : '';
+  return '<div class="bt-info">' + bits.join(' &middot; ') + caveat + '</div>';
+}
+function qualityRow(r) {
+  const q = r.QualityRating || '';
+  return '<div class="emoji-row"><span class="emoji-lbl">Lead quality:</span>' +
+    '<button class="qual-btn q-poor' + (q === 'Poor' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Poor\')">Poor</button>' +
+    '<button class="qual-btn q-ok' + (q === 'Neutral' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Neutral\')">OK</button>' +
+    '<button class="qual-btn q-good' + (q === 'Good' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Good\')">Good</button></div>';
+}
+/* ---------------- creditsafe helpers ---------------- */
+var GBP = new Intl.NumberFormat('en-GB', {style:'currency', currency:'GBP', maximumFractionDigits:0});
+
+function csRiskClass(band) {
+  if (!band) return '';
+  var b = band.toLowerCase();
+  if (b.indexOf('very low risk') > -1 || b.indexOf('low risk') > -1) return 'cs-green';
+  if (b.indexOf('moderate') > -1) return 'cs-amber';
+  return 'cs-red';
+}
+
+function csStaleDays(pullDate) {
+  if (!pullDate) return 999;
+  return Math.floor((Date.now() - new Date(pullDate).getTime()) / 86400000);
+}
+
+function creditMatchedHTML(r) {
+  var cls = csRiskClass(r.CreditRiskBand);
+  var days = csStaleDays(r.CreditPullDate);
+  var stale = days > 60;
+  var pullStr = r.CreditPullDate ? new Date(r.CreditPullDate).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : '';
+  var html = '<div class="credit-info"><div class="credit-row">' +
+    '<span class="credit-score ' + cls + '">' + esc(r.CreditRiskBand) + ' (' + esc(r.CreditScore) + ')</span>';
+  if (r.CreditLimit && r.CreditLimit !== '0') html += '<span class="credit-val">Limit: <b>' + GBP.format(parseFloat(r.CreditLimit)) + '</b></span>';
+  html += '</div>';
+  if (r.ShareholderFunds || r.WorkingCapital) {
+    html += '<div class="credit-row" style="margin-top:3px;">';
+    if (r.ShareholderFunds) html += '<span class="credit-val">SH Funds: <b>' + GBP.format(parseFloat(r.ShareholderFunds)) + '</b></span>';
+    if (r.WorkingCapital) html += '<span class="credit-val">Working Cap: <b>' + GBP.format(parseFloat(r.WorkingCapital)) + '</b></span>';
+    html += '</div>';
+  }
+  html += '<div class="credit-meta">';
+  if (stale) html += '<span class="credit-stale">Data ' + days + ' days old</span> ';
+  else html += 'Pulled ' + pullStr + ' ';
+  if (stale || r.CreditConnectId) html += '<button class="btn-sm ghost" style="padding:2px 8px;font-size:11px;" onclick="event.stopPropagation();refreshCredit(' + r.Id + ')">Refresh</button>';
+  html += '</div></div>';
+  return html;
+}
+
+function creditPickerHTML(r) {
+  if (r.CreditStatus === 'ambiguous' && r.CreditCandidates) {
+    try {
+      var cands = JSON.parse(r.CreditCandidates);
+      if (!cands.length) return '';
+      var html = '<div class="cs-picker"><div class="cs-picker-title">Select Creditsafe match (' + cands.length + ' found)</div>';
+      cands.forEach(function(c) {
+        var addr = '';
+        if (c.address) addr = c.address.simpleValue || c.address.city || '';
+        html += '<div class="cs-picker-row"><span class="cs-picker-name">' + esc(c.name) + '</span>' +
+          '<span class="cs-picker-detail">' + esc(c.regNo || '') + (addr ? ' - ' + esc(addr) : '') + ' (' + esc(c.type || '') + ')</span>' +
+          '<button class="btn-sm" style="padding:4px 10px;font-size:12px;" onclick="event.stopPropagation();selectCreditMatch(' + r.Id + ',\'' + esc(c.id) + '\')">Select</button></div>';
+      });
+      html += '</div>';
+      return html;
+    } catch(e) { return ''; }
+  }
+  if (r.CreditStatus === 'none') {
+    return '<div style="font-size:12px;color:var(--text-3);padding:4px 0;">No Creditsafe match</div>';
+  }
+  return '';
+}
+
+async function refreshCredit(id) {
+  var row = findRow(id);
+  if (!row || !row.CreditConnectId) return;
+  toast('Refreshing credit data...');
+  try {
+    await dataApi('creditsafe', { itemId: String(id), connectId: row.CreditConnectId });
+    toast('Credit data refreshed - reloading...');
+    if (currentSession) {
+      var res = await dataApi('getLeads', { sessionId: currentSession });
+      if (res && res.value) { sessionRows = res.value; renderResults(); }
+    }
+  } catch(e) { toast('Refresh failed: ' + e.message, true); }
+}
+
+async function selectCreditMatch(leadId, connectId) {
+  toast('Pulling credit report...');
+  try {
+    await dataApi('creditsafe', { itemId: String(leadId), connectId: connectId });
+    toast('Credit data loaded - reloading...');
+    if (currentSession) {
+      var res = await dataApi('getLeads', { sessionId: currentSession });
+      if (res && res.value) { sessionRows = res.value; renderResults(); }
+    }
+  } catch(e) { toast('Credit check failed: ' + e.message, true); }
+}
+
+function cardHTML(r, page) {
+  page = page || 'results';
+  const st = statusOf(r);
+  let stateBadge = '';
+  if (st === 'claimed') stateBadge = '<span class="badge b-green">Claimed by ' + esc(displayName(r.ClaimedBy)) + '</span>';
+  if (st === 'rejected') stateBadge = '<span class="badge b-red">Rejected</span>';
+  if (st === 'tbc') stateBadge = '<span class="badge b-blue">Marked TBC by ' + esc(displayName(r.TBCBy)) + '</span>';
+  let actions = '';
+  if (st === 'open') {
+    actions = '<div class="card-actions">' +
+      '<button class="action-btn action-reject" onclick="rejectLead(' + r.Id + ')">No Opportunity</button>' +
+      '<button class="action-btn action-tbc" onclick="tbcLead(' + r.Id + ')">TBC</button>' +
+      '<button class="action-btn action-tbc" onclick="sendToTBC(' + r.Id + ')">Send to&hellip;</button>' +
+      '<button class="action-btn action-claim" onclick="claimLead(' + r.Id + ')">Claim</button></div>';
+  } else if (st === 'tbc') {
+    actions = '<div class="card-actions">' +
+      '<button class="action-btn action-tbc" onclick="undoTBC(' + r.Id + ')">Undo TBC</button>' +
+      '<button class="action-btn action-claim" onclick="claimLead(' + r.Id + ')">Claim</button></div>';
+  } else if (st === 'rejected') {
+    actions = '<div class="card-actions">' +
+      '<button class="action-btn action-tbc" onclick="undoReject(' + r.Id + ')">Undo Rejection</button></div>';
+  } else if (st === 'claimed' && String(r.ClaimedBy).toLowerCase() === ME.email.toLowerCase()) {
+    actions = '<div class="card-actions"><button class="action-btn action-reject" onclick="unclaimLead(' + r.Id + ')">Unclaim</button></div>';
+  }
+  return '<div class="lead-card' + (st === 'claimed' ? ' is-claimed' : st === 'rejected' ? ' is-rejected' : '') + '" id="lead-' + r.Id + '">' +
+    '<div class="card-top"><div class="card-name" onclick="openLeadModal(' + r.Id + ')">' + esc(r.Title) + '</div></div>' +
+    '<div class="card-loc">' + esc(r.Location || '') + (r.Sector ? ' &middot; ' + esc(r.Sector) : '') + '</div>' +
+    '<div class="badge-row">' + urlBadge(r) + btBadge(r) + stateBadge + '</div>' +
+    btInfo(r) +
+    (parseInt(r.BTMatchCount || '0', 10) > 1 ? '<div id="bt-inline-' + r.Id + '"><button class="btn-sm ghost" style="width:100%;" onclick="loadBTInline(' + r.Id + ')">View all ' + parseInt(r.BTMatchCount, 10) + ' possible BT matches</button></div>' : '') +
+    creditPickerHTML(r) +
+    detailBits(r, page) +
+    (r.WebsiteURL ? '<a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">&#128279; ' + esc(hostOf(r.WebsiteURL)) + '</a>' : '') +
+    (r.PhoneNumber ? '<a class="card-url" href="tel:' + esc(String(r.PhoneNumber).replace(/\s+/g, '')) + '">&#128222; ' + esc(r.PhoneNumber) + '</a>' : '') +
+    (r.ContactEmail ? '<a class="card-url" href="mailto:' + esc(r.ContactEmail) + '">&#9993; ' + esc(r.ContactEmail) + '</a>' : '') +
+    '<div class="card-spacer"></div>' + actions + qualityRow(r) + '</div>';
+}
+
+/* ---------------- confirm / reason dialog ---------------- */
+let dialogResolve = null;
+function showDialog(opts) {
+  return new Promise(resolve => {
+    dialogResolve = resolve;
+    document.getElementById('dialog-title').textContent = opts.title;
+    document.getElementById('dialog-msg').textContent = opts.message || '';
+    const extra = document.getElementById('dialog-extra');
+    if (opts.select) {
+      extra.innerHTML = '<select class="form-select" id="dialog-select">' +
+        opts.select.map(o => {
+          const val = (o && typeof o === 'object') ? o.value : o;
+          const lab = (o && typeof o === 'object') ? o.label : o;
+          return '<option value="' + esc(val) + '">' + esc(lab) + '</option>';
+        }).join('') + '</select>';
+    } else if (opts.checkGroups) {
+      extra.innerHTML = opts.checkGroups.map(function(g) {
+        return '<div style="margin-bottom:10px;"><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--gold);margin-bottom:4px;border-bottom:1px solid var(--border);padding-bottom:3px;">' + esc(g.heading) + '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">' + g.checks.map(function(c) {
+            return '<label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;"><input type="checkbox" class="dlg-chk" value="' + esc(c.value) + '"' + (c.checked ? ' checked' : '') + '> ' + esc(c.label) + '</label>';
+          }).join('') + '</div></div>';
+      }).join('');
+    } else if (opts.checks) {
+      extra.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">' + opts.checks.map(c =>
+        '<label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;"><input type="checkbox" class="dlg-chk" value="' + esc(c.value) + '"' + (c.checked ? ' checked' : '') + '> ' + esc(c.label) + '</label>').join('') + '</div>';
+    } else {
+      extra.innerHTML = '';
+    }
+    const btn = document.getElementById('dialog-confirm');
+    btn.textContent = opts.confirmLabel || 'Confirm';
+    btn.className = opts.danger === false ? 'btn-sm' : 'btn-danger';
+    document.getElementById('dialog-overlay').classList.add('open');
+  });
+}
+function dialogDone(confirmed) {
+  document.getElementById('dialog-overlay').classList.remove('open');
+  if (!dialogResolve) return;
+  const sel = document.getElementById('dialog-select');
+  const chks = document.querySelectorAll('#dialog-extra .dlg-chk');
+  let result = true;
+  if (sel) result = sel.value;
+  else if (chks.length) result = Array.from(chks).filter(c => c.checked).map(c => c.value);
+  dialogResolve(confirmed ? result : null);
+  dialogResolve = null;
+}
+document.getElementById('dialog-cancel').onclick = () => dialogDone(false);
+document.getElementById('dialog-confirm').onclick = () => dialogDone(true);
+
+function rejectReasons() {
+  const fromList = dropdowns.RejectReason.map(r => r.Title);
+  return fromList.length ? fromList : FALLBACK_REJECT_REASONS;
+}
+
+/* ---------------- lead actions ---------------- */
+function findRow(id) {
+  return sessionRows.find(r => r.Id === id) || tbcRows.find(r => r.Id === id) || claimedRows.find(r => r.Id === id);
+}
+async function updateLead(id, fields, okMsg) {
+  try {
+    await dataApi('update', { itemId: String(id), fields: fields });
+    const row = findRow(id);
+    if (row) Object.assign(row, fields);
+    renderResults();
+    if (document.getElementById('screen-tbc').classList.contains('active')) renderTBC();
+    if (document.getElementById('screen-claimed').classList.contains('active')) renderClaimed();
+    if (okMsg) toast(okMsg);
+  } catch (e) {
+    toast('Update failed: ' + e.message, true);
+  }
+}
+function claimLead(id) { const row = findRow(id); if (row) row.__gone = true; updateLead(id, { ClaimedBy: ME.email, ClaimedDate: nowISO(), TBCBy: null, RejectedBy: null }, 'Lead claimed - it is yours.'); }
+async function unclaimLead(id) {
+  const r = findRow(id);
+  const ok = await showDialog({
+    title: 'Unclaim this lead?',
+    message: '"' + (r ? r.Title : '') + '" will go back into the general pool for anyone to pick up.',
+    confirmLabel: 'Unclaim'
+  });
+  if (!ok) return;
+  const row = findRow(id); if (row) row.__gone = true;
+  updateLead(id, { ClaimedBy: null, ClaimedDate: null }, 'Lead released back to the pool.');
+}
+async function rejectLead(id) {
+  const r = findRow(id);
+  const reason = await showDialog({
+    title: 'Reject this lead?',
+    message: 'Why is "' + (r ? r.Title : '') + '" not an opportunity? The company joins the exclusion list and will not be suggested again.',
+    select: rejectReasons(),
+    confirmLabel: 'Reject'
+  });
+  if (!reason) return;
+  const row = findRow(id); if (row) row.__gone = true;
+  updateLead(id, { RejectedBy: ME.email, RejectedDate: nowISO(), RejectReason: String(reason), ClaimedBy: null, ClaimedDate: null }, 'Rejected - the company joins the exclusion list.');
+}
+async function undoReject(id) {
+  const r = findRow(id);
+  await updateLead(id, { RejectedBy: null, RejectedDate: null, RejectReason: null }, null);
+  if (!r) return;
+  try {
+    const res = await dataApi('removeExclusion', { name: r.Title });
+    toast(res && res.removed ? 'Rejection undone - removed from the exclusion list.' : 'Rejection undone. (No exclusion entry found.)');
+  } catch (e) {
+    toast('Rejection undone, but exclusion removal failed: ' + e.message, true);
+  }
+}
+function tbcLead(id) {
+  const row = findRow(id); if (row) row.__gone = true;
+  updateLead(id, { TBCBy: ME.email, ClaimedBy: null, ClaimedDate: null }, 'Marked TBC.');
+}
+async function sendToTBC(id) {
+  const r = findRow(id);
+  const users = Object.keys(userMap)
+    .filter(e => e && e !== ME.email.toLowerCase())
+    .map(e => ({ value: e, label: userMap[e] }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  if (!users.length) { toast('No other users available to send to.', true); return; }
+  const target = await showDialog({
+    title: 'Send to someone’s TBC',
+    message: 'Who should pick up "' + (r ? r.Title : '') + '"? It will appear in their TBC list.',
+    select: users,
+    confirmLabel: 'Send',
+    danger: false
+  });
+  if (!target) return;
+  const row = findRow(id); if (row) row.__gone = true;
+  updateLead(id, { TBCBy: target, ClaimedBy: null, ClaimedDate: null }, 'Sent to ' + displayName(target) + '’s TBC.');
+}
+function undoTBC(id) { updateLead(id, { TBCBy: null }, 'TBC removed - back to open.'); }
+function setQuality(id, rating) { updateLead(id, { QualityRating: rating }, 'Quality feedback saved - future searches learn from this.'); }
+
+function insertStamp(id) {
+  const box = document.getElementById('note-' + id);
+  if (!box) return;
+  const now = new Date();
+  const stamp = (box.value && !box.value.endsWith('\n') ? '\n' : '') +
+    '[' + now.toLocaleDateString('en-GB') + ' ' +
+    now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' - ' + displayName(ME.email) + '] ';
+  const pos = box.selectionStart != null ? box.selectionStart : box.value.length;
+  box.value = box.value.slice(0, pos) + stamp + box.value.slice(pos);
+  const newPos = pos + stamp.length;
+  box.focus();
+  box.setSelectionRange(newPos, newPos);
+}
+async function saveNote(id) {
+  const box = document.getElementById('note-' + id);
+  if (!box) return;
+  const val = box.value.trim();
+  if (!val) { toast('Type a note first.', true); return; }
+  const r = findRow(id);
+  const now = new Date();
+  const entry = val.startsWith('[') ? val :
+    '[' + now.toLocaleDateString('en-GB') + ' ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' - ' + displayName(ME.email) + '] ' + val;
+  const combined = (r && r.LeadNotes && String(r.LeadNotes).trim() ? String(r.LeadNotes).replace(/\s+$/, '') + '\n\n' : '') + entry;
+  try {
+    await dataApi('update', { itemId: String(id), fields: { LeadNotes: combined } });
+    if (r) r.LeadNotes = combined;
+    box.value = '';
+    const hist = document.getElementById('note-hist-' + id);
+    if (hist) hist.innerHTML = noteHistoryHTML(combined);
+    toast('Note saved.');
+  } catch (e) { toast('Could not save note: ' + e.message, true); }
+}
+
+/* ---------------- claimed screen ---------------- */
+async function openClaimed() {
+  goTo('screen-claimed');
+  document.getElementById('claimed-sub').textContent = 'Loading...';
+  try {
+    const r = await dataApi('getClaimed');
+    claimedRows = (r && r.value) || [];
+    renderClaimed();
+  } catch (e) { toast('Could not load claimed leads: ' + e.message, true); }
+}
+function claimedQualityCell(r) {
+  const q = r.QualityRating || '';
+  return '<div class="claimed-qual" onclick="event.stopPropagation()">' +
+    '<button class="qual-btn q-poor' + (q === 'Poor' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Poor\')">Poor</button>' +
+    '<button class="qual-btn q-ok' + (q === 'Neutral' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Neutral\')">OK</button>' +
+    '<button class="qual-btn q-good' + (q === 'Good' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Good\')">Good</button></div>';
+}
+function renderClaimed() {
+  const mine = claimedRows.filter(r => !r.__gone && r.ClaimedBy && String(r.ClaimedBy).toLowerCase() === ME.email.toLowerCase() && !r.RejectedBy && !r.TBCBy);
+  document.getElementById('claimed-sub').textContent = mine.length + ' lead' + (mine.length === 1 ? '' : 's') + ' claimed by ' + displayName(ME.email);
+  document.getElementById('claimed-empty').style.display = mine.length ? 'none' : 'block';
+  const cols = '2.4fr 0.9fr 1.7fr 2fr';
+  const head = '<div class="table-head" style="grid-template-columns:' + cols + ';"><div>Company</div><div>Claimed</div><div>Lead quality</div><div></div></div>';
+  document.getElementById('claimed-table').style.display = mine.length ? 'block' : 'none';
+  document.getElementById('claimed-table').innerHTML = head + mine.map(r =>
+    '<div class="table-row" style="grid-template-columns:' + cols + ';" onclick="openLeadModal(' + r.Id + ', true)">' +
+    '<div class="row-name">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' +
+    '<div class="row-dim">' + fmtDate(r.ClaimedDate) + '</div>' +
+    claimedQualityCell(r) +
+    '<div class="claimed-actions" onclick="event.stopPropagation()">' +
+    '<button class="btn-unclaim" onclick="unclaimLead(' + r.Id + ')">Unclaim</button>' +
+    '<button class="btn-unclaim" style="color:var(--navy);border-color:var(--border);" onclick="tbcLead(' + r.Id + ')">TBC</button>' +
+    '<button class="btn-unclaim" style="color:var(--navy);border-color:var(--border);" onclick="sendToTBC(' + r.Id + ')">Send to&hellip;</button>' +
+    '<button class="btn-unclaim" style="color:var(--amber);border-color:var(--amber-bd);" onclick="rejectLead(' + r.Id + ')">Reject</button></div></div>'
+  ).join('');
+}
+const EXPORT_GROUPS = [
+  { heading: 'Company', fields: [['Title', 'Company name'], ['Location', 'Location'], ['Sector', 'Sector'], ['Industry', 'Industry'], ['Description', 'Description'], ['WebsiteURL', 'Website'], ['EmailDomain', 'Email domain'], ['CompanyPhoneNumber', 'Company phone'], ['CreditScore', 'Credit score'], ['CreditRiskBand', 'Risk band'], ['CreditLimit', 'Credit limit'], ['ShareholderFunds', 'Shareholder funds'], ['WorkingCapital', 'Working capital']] },
+  { heading: 'Contact', fields: [['ContactName', 'Contact name'], ['ContactRole', 'Contact role'], ['PhoneNumber', 'Contact phone'], ['ContactEmail', 'Email address']] },
+  { heading: 'SPP', fields: [['SPPProductHook', 'SPP angle'], ['ProductRange', 'Product range']] },
+  { heading: 'Lead info', fields: [['Region', 'Region'], ['ClaimedDate', 'Claimed date'], ['QualityRating', 'Quality'], ['LeadNotes', 'Notes']] },
+  { heading: 'Print options', fields: [['_NoteSpace', 'Note space']] }
+];
+const EXPORT_FIELDS = EXPORT_GROUPS.reduce(function(a, g) { return a.concat(g.fields); }, []);
+async function exportReport(source) {
+  var rows = source === 'tbc' ? tbcRows.filter(function(r) { return !r.ClaimedBy && !r.RejectedBy; }) : claimedRows;
+  var label = source === 'tbc' ? 'TBC' : 'claimed';
+  if (!rows.length) { toast('Nothing to export.', true); return; }
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem('spp-export-fields') || '[]'); } catch (e) {}
+  const picked = await showDialog({
+    title: 'Export ' + label + ' leads',
+    message: 'Choose the fields to include, then a print-ready report opens in a new tab (Ctrl+P to save as PDF).',
+    checkGroups: EXPORT_GROUPS.map(function(g) {
+      return { heading: g.heading, checks: g.fields.map(function(f) { return { value: f[0], label: f[1], checked: saved.length ? saved.includes(f[0]) : true }; }) };
+    }),
+    confirmLabel: 'Create report', danger: false
+  });
+  if (!picked || !picked.length) return;
+  localStorage.setItem('spp-export-fields', JSON.stringify(picked));
+  const fields = EXPORT_FIELDS.filter(f => picked.includes(f[0]));
+  const w = window.open('', '_blank');
+  if (!w) { toast('Pop-up blocked - allow pop-ups for this site.', true); return; }
+  var showNoteSpace = fields.some(function(f) { return f[0] === '_NoteSpace'; });
+  var dataFields = fields.filter(function(f) { return f[0] !== '_NoteSpace'; });
+  const rowsHtml = rows.map(r =>
+    '<div class="lead' + (showNoteSpace ? ' lead-with-notes' : '') + '"><div class="lead-content"><h2>' + esc(r.Title) + '</h2><table>' +
+    dataFields.filter(f => f[0] !== 'Title' && r[f[0]]).map(f =>
+      '<tr><th>' + esc(f[1]) + '</th><td>' + (f[0] === 'ClaimedDate' ? fmtDate(r[f[0]]) : f[0] === 'PhoneNumber' ? esc(r[f[0]]) : esc(r[f[0]])) + '</td></tr>').join('') +
+    '</table></div>' + (showNoteSpace ? '<div class="note-space"><div class="note-space-label">Notes</div></div>' : '') + '</div>').join('');
+  w.document.write('<!DOCTYPE html><html><head><title>SPP Claimed Leads - ' + esc(displayName(ME.email)) + '</title><style>' +
+    'body{font-family:Segoe UI,Arial,sans-serif;color:#14301d;margin:40px;max-width:900px;}' +
+    'h1{color:#007835;font-size:22px;border-bottom:3px solid #a43f17;padding-bottom:8px;}' +
+    '.meta{color:#666;font-size:12px;margin-bottom:24px;}' +
+    '.lead{page-break-inside:avoid;border:1px solid #d9e2d9;border-radius:10px;padding:16px 20px;margin-bottom:16px;}' +
+    '.lead-with-notes{display:grid;grid-template-columns:1fr 280px;gap:0;}' +
+    '.lead-content{padding-right:16px;}' +
+    '.note-space{border-left:1px solid #d9e2d9;padding:8px 14px;min-height:120px;}' +
+    '.note-space-label{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#a43f17;font-weight:700;margin-bottom:4px;}' + +
+    'h2{color:#007835;font-size:16px;margin:0 0 10px;}' +
+    'table{border-collapse:collapse;width:100%;}' +
+    'th{text-align:left;vertical-align:top;color:#a43f17;font-size:11px;text-transform:uppercase;padding:4px 14px 4px 0;width:120px;}' +
+    'td{font-size:13px;padding:4px 0;white-space:pre-wrap;}' +
+    '@media print{.noprint{display:none;}}' +
+    '</style></head><body>' +
+    '<h1>SPP ' + label.charAt(0).toUpperCase() + label.slice(1) + ' Leads</h1><div class="meta">' + esc(displayName(ME.email)) + ' &middot; ' + new Date().toLocaleDateString('en-GB') + ' &middot; ' + rows.length + ' leads</div>' +
+    '<button class="noprint" style="margin-bottom:18px;padding:8px 16px;cursor:pointer;" onclick="window.print()">Print / Save as PDF</button>' +
+    rowsHtml + '</body></html>');
+  w.document.close();
+}
+function exportClaimedCSV() {
+  if (!claimedRows.length) { toast('Nothing to export.', true); return; }
+  const cols = ['Title', 'Location', 'Sector', 'WebsiteURL', 'EmailDomain', 'ContactName', 'ContactRole', 'PhoneNumber', 'CompanyPhoneNumber', 'ContactEmail', 'Industry', 'ProductRange', 'Region', 'ClaimedDate', 'QualityRating', 'SPPProductHook'];
+  const escCSV = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const csv = [cols.join(',')].concat(claimedRows.map(r => cols.map(c => escCSV(r[c])).join(','))).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'spp-claimed-leads.csv';
+  a.click();
+}
+
+/* ---------------- TBC screen ---------------- */
+let tbcMode = 'all';
+let tbcDisplayIds = null;
+async function openTBC(mode) {
+  tbcMode = (mode === 'mine') ? 'mine' : 'all';
+  tbcDisplayIds = null;
+  goTo('screen-tbc');
+  document.getElementById('tbc-heading').textContent = tbcMode === 'mine' ? 'My TBC Leads' : 'Review Queue';
+  document.getElementById('tbc-grid').innerHTML = '';
+  try {
+    const r = await dataApi('getTBC');
+    tbcRows = (r && r.value) || [];
+    renderTBC();
+  } catch (e) { toast('Could not load the queue: ' + e.message, true); }
+}
+function renderTBC() {
+  let eligible = tbcRows.filter(r => !r.ClaimedBy && !r.RejectedBy);
+  if (tbcMode === 'mine') eligible = eligible.filter(r => r.TBCBy && String(r.TBCBy).toLowerCase() === ME.email.toLowerCase());
+  else eligible = eligible.filter(r => !r.TBCBy);
+  if (!tbcDisplayIds) tbcDisplayIds = new Set(eligible.map(r => r.Id));
+  const open = tbcRows.filter(r => tbcDisplayIds.has(r.Id));
+  document.getElementById('tbc-sub').textContent = tbcMode === 'mine'
+    ? open.length + ' lead' + (open.length === 1 ? '' : 's') + ' you marked TBC, newest first.'
+    : open.length + ' lead' + (open.length === 1 ? '' : 's') + ' awaiting a decision, newest first.';
+  document.getElementById('tbc-empty').style.display = open.length ? 'none' : 'block';
+  const grid = document.getElementById('tbc-grid');
+  if (tbcMode === 'mine') {
+    grid.style.display = 'block';
+    const cols = '3fr 1fr 1.4fr';
+    grid.innerHTML = open.length === 0 ? '' :
+      '<div class="lead-table"><div class="table-head" style="grid-template-columns:' + cols + ';"><div>Company</div><div>Generated</div><div></div></div>' +
+      open.map(r => {
+        let btns;
+        if (r.RejectedBy) {
+          btns = '<button class="btn-unclaim" style="color:var(--text-2);border-color:var(--border);" onclick="undoReject(' + r.Id + ')">Undo Rejection</button>';
+        } else if (r.ClaimedBy) {
+          btns = String(r.ClaimedBy).toLowerCase() === ME.email.toLowerCase()
+            ? '<button class="btn-unclaim" onclick="unclaimLead(' + r.Id + ')">Unclaim</button>'
+            : '<span class="row-dim">Claimed by ' + esc(displayName(r.ClaimedBy)) + '</span>';
+        } else {
+          btns = '<button class="btn-unclaim" style="color:var(--text-2);border-color:var(--border);" onclick="undoTBC(' + r.Id + ')">Undo TBC</button>' +
+            '<button class="btn-unclaim" style="color:var(--green);border-color:var(--green-bd);" onclick="claimLead(' + r.Id + ')">Claim</button>';
+        }
+        return '<div class="table-row" style="grid-template-columns:' + cols + ';" onclick="openLeadModal(' + r.Id + ', true)">' +
+        '<div class="row-name">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' +
+        '<div class="row-dim">' + fmtDate(r.GeneratedDate) + '</div>' +
+        '<div onclick="event.stopPropagation()" style="display:flex;gap:8px;justify-content:flex-end;">' + btns + '</div></div>';
+      }).join('') + '</div>';
+  } else {
+    grid.style.display = '';
+    const keep = sessionRows; sessionRows = open;            // reuse card renderer against TBC data
+    grid.innerHTML = open.map(r => cardHTML(r, 'tbc')).join('');
+    sessionRows = keep;
+  }
+}
+
+/* ---------------- lead modal + BT panel ---------------- */
+function noteHistoryHTML(notes) {
+  if (!notes || !String(notes).trim()) return '<div class="row-dim" style="font-size:12px;">No notes yet.</div>';
+  const entries = String(notes).split(/\n+(?=\[)/).map(s => s.trim()).filter(Boolean);
+  return entries.reverse().map(en => {
+    let head = '', body = en;
+    if (en.startsWith('[')) { const i = en.indexOf(']'); if (i > 0) { head = en.slice(1, i); body = en.slice(i + 1).trim(); } }
+    return '<div class="note-entry">' + (head ? '<div class="note-entry-head">' + esc(head) + '</div>' : '') +
+      '<div class="note-entry-body">' + esc(body) + '</div></div>';
+  }).join('');
+}
+function openLeadModal(id, withNotes) {
+  const r = findRow(id);
+  if (!r) return;
+  document.getElementById('modal-title').textContent = r.Title;
+  document.querySelector('#modal-overlay .modal').classList.toggle('with-notes', !!withNotes);
+  const count = parseInt(r.BTMatchCount || '0', 10) || 0;
+  const pg = document.getElementById('screen-claimed').classList.contains('active') ? 'claimed'
+    : (document.getElementById('screen-tbc').classList.contains('active') ? 'tbc' : 'results');
+  const openAttr = cardDetailsOpen(pg) ? ' open' : '';
+  const descSec = r.Description ? (withNotes
+    ? '<details class="collapse"' + openAttr + '><summary>Description</summary><div class="card-desc" style="padding-bottom:10px;">' + esc(r.Description) + '</div></details>'
+    : '<div class="modal-section"><h4>Description</h4><div class="card-desc">' + esc(r.Description) + '</div></div>') : '';
+  const hookSec = r.SPPProductHook ? (withNotes
+    ? '<details class="collapse"' + openAttr + '><summary>SPP angle</summary><div class="card-hook" style="margin-bottom:10px;">' + esc(r.SPPProductHook) + '</div></details>'
+    : '<div class="modal-section"><h4>SPP angle</h4><div class="card-hook">' + esc(r.SPPProductHook) + '</div></div>') : '';
+  const detail =
+    '<div class="card-loc">' + esc(r.Location || '') + (r.Sector ? ' &middot; ' + esc(r.Sector) : '') + '</div>' +
+    '<div class="badge-row" style="margin-top:8px;">' + urlBadge(r) + btBadge(r) + '</div>' +
+    descSec + hookSec +
+    '<div class="modal-section"><h4>Details</h4><div class="bt-info">' +
+    (r.WebsiteURL ? 'Website: <a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">' + esc(r.WebsiteURL) + '</a><br>' : '') +
+    (r.EmailDomain ? 'Email domain: ' + esc(r.EmailDomain) + '<br>' : '') +
+    (r.ContactName ? 'Contact: ' + esc(r.ContactName) + (r.ContactRole ? ' (' + esc(r.ContactRole) + ')' : '') + '<br>' : '') +
+    (r.PhoneNumber ? 'Phone (contact): <a class="card-url" href="tel:' + esc(String(r.PhoneNumber).replace(/\s+/g, '')) + '">' + esc(r.PhoneNumber) + '</a><br>' : '') +
+    (r.CompanyPhoneNumber ? 'Phone (company): <a class="card-url" href="tel:' + esc(String(r.CompanyPhoneNumber).replace(/\s+/g, '')) + '">' + esc(r.CompanyPhoneNumber) + '</a><br>' : '') +
+    (r.ContactEmail ? 'Email: <a class="card-url" href="mailto:' + esc(r.ContactEmail) + '">' + esc(r.ContactEmail) + '</a><br>' : '') +
+    'Generated ' + fmtDate(r.GeneratedDate) + ' by ' + esc(displayName(r.GeneratedBy)) +
+    (r.ClaimedBy ? '<br>Claimed by ' + esc(displayName(r.ClaimedBy)) + ' on ' + fmtDate(r.ClaimedDate) : '') +
+    (r.RejectReason ? '<br>Rejected: ' + esc(r.RejectReason) : '') +
+    '</div>' + editContactBtn(r) + '</div>' +
+    btInfo(r) +
+    (count >= 1 ? '<div class="modal-section"><h4>BT customer records</h4><div id="bt-panel"><button class="btn-sm ghost" onclick="loadBTMatches(' + r.Id + ')">Load ' + (count > 1 ? 'all ' + count + ' matching records' : 'matching record') + '</button></div></div>' : '') +
+    ((r.CreditStatus === 'matched' && r.CreditScore) ? '<div class="modal-section"><h4>Financials</h4>' + creditMatchedHTML(r) + '</div>' : '') +
+    (creditPickerHTML(r) ? '<div class="modal-section">' + creditPickerHTML(r) + '</div>' : '');
+  if (withNotes) {
+    document.getElementById('modal-body').innerHTML = '<div class="modal-grid"><div>' + detail +
+      '<div class="modal-section"><h4>Add a note</h4>' +
+      '<textarea class="note-box" id="note-' + r.Id + '" style="min-height:90px;" placeholder="Type a new note..."></textarea>' +
+      '<div style="display:flex;gap:10px;margin-top:10px;align-items:center;"><button class="btn-sm" onclick="saveNote(' + r.Id + ')">Save note</button>' +
+      '<span class="row-dim" style="font-size:11px;">Time-stamped automatically on save.</span></div></div></div>' +
+      '<aside class="notes-side"><div class="modal-section" style="margin-top:0;"><h4>Notes</h4>' +
+      '<div class="note-history" id="note-hist-' + r.Id + '">' + noteHistoryHTML(r.LeadNotes) + '</div></div></aside></div>';
+  } else {
+    document.getElementById('modal-body').innerHTML = detail;
+  }
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function canEditContact(r) {
+  if (!ME || !ME.email) return false;
+  var me = ME.email.toLowerCase();
+  if (r.ClaimedBy && String(r.ClaimedBy).toLowerCase() === me) return true;
+  if (r.TBCBy && String(r.TBCBy).toLowerCase() === me) return true;
+  return false;
+}
+function editContactBtn(r) {
+  if (!canEditContact(r)) return '';
+  return '<div style="margin-top:10px;"><button class="edit-contact-btn" onclick="openEditContact(' + r.Id + ')">&#9998; Edit contact details</button></div>';
+}
+var editLeadId = null;
+function openEditContact(id) {
+  var r = findRow(id);
+  if (!r || !canEditContact(r)) return;
+  editLeadId = id;
+  document.getElementById('edit-modal-title').textContent = 'Edit contact details';
+  document.getElementById('edit-modal-sub').textContent = r.Title;
+  document.getElementById('edit-modal-body').innerHTML =
+    '<div class="ecf-grid">' +
+    '<div class="ecf-field"><label>Contact name</label><input id="ecf-name" value="' + esc(r.ContactName || '') + '"></div>' +
+    '<div class="ecf-field"><label>Contact role</label><input id="ecf-role" value="' + esc(r.ContactRole || '') + '"></div>' +
+    '<div class="ecf-field"><label>Contact phone</label><input id="ecf-phone" value="' + esc(r.PhoneNumber || '') + '"></div>' +
+    '<div class="ecf-field"><label>Email address</label><input id="ecf-email" value="' + esc(r.ContactEmail || '') + '"></div>' +
+    '<div class="ecf-field ecf-full"><label>Company phone</label><input id="ecf-cophone" value="' + esc(r.CompanyPhoneNumber || '') + '"></div>' +
+    '</div>' +
+    '<div class="ecf-actions">' +
+    '<button class="btn-sm ghost" onclick="closeEditModal()">Cancel</button>' +
+    '<button class="btn-sm" id="ecf-save-btn" onclick="saveContactEdits(' + r.Id + ')">Save changes</button>' +
+    '</div>';
+  document.getElementById('edit-overlay').classList.add('open');
+}
+function closeEditModal() {
+  document.getElementById('edit-overlay').classList.remove('open');
+  editLeadId = null;
+}
+async function saveContactEdits(id) {
+  var fields = {
+    ContactName: document.getElementById('ecf-name').value.trim(),
+    ContactRole: document.getElementById('ecf-role').value.trim(),
+    PhoneNumber: document.getElementById('ecf-phone').value.trim(),
+    ContactEmail: document.getElementById('ecf-email').value.trim(),
+    CompanyPhoneNumber: document.getElementById('ecf-cophone').value.trim()
+  };
+  var btn = document.getElementById('ecf-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  try {
+    await dataApi('update', { itemId: String(id), fields: fields });
+    var row = findRow(id);
+    if (row) Object.assign(row, fields);
+    closeEditModal();
+    var withNotes = document.querySelector('#modal-overlay .modal').classList.contains('with-notes');
+    openLeadModal(id, withNotes);
+    renderResults();
+    if (document.getElementById('screen-tbc').classList.contains('active')) renderTBC();
+    if (document.getElementById('screen-claimed').classList.contains('active')) renderClaimed();
+    toast('Contact details updated.');
+  } catch(e) {
+    toast('Save failed: ' + e.message, true);
+    var btn2 = document.getElementById('ecf-save-btn');
+    if (btn2) { btn2.disabled = false; btn2.textContent = 'Save changes'; }
+  }
+}
+function normaliseUrl(u) {
+  if (!u) return '';
+  u = u.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '');
+  return u;
+}
+function openCreateLead() {
+  document.getElementById('create-lead-dup').style.display = 'none';
+  document.getElementById('create-lead-dup').innerHTML = '';
+  var indOpts = (dropdowns.Industry || []).map(function(o) { return '<option value="' + esc(o.Title) + '">' + esc(o.Title) + '</option>'; }).join('');
+  var prOpts = (dropdowns.ProductRange || []).map(function(o) { return '<option value="' + esc(o.Title) + '">' + esc(o.Title) + '</option>'; }).join('');
+  var regOpts = (dropdowns.Region || []).map(function(o) { return '<option value="' + esc(o.Title) + '">' + esc(o.Title) + '</option>'; }).join('');
+  document.getElementById('create-lead-body').innerHTML =
+    '<div class="clf-grid">' +
+    '<div class="clf-section">Company</div>' +
+    '<div class="clf-field clf-full"><label>Company name <span class="req">*</span></label><input id="clf-name" placeholder="e.g. Acme Joinery Ltd"></div>' +
+    '<div class="clf-field"><label>Website <span class="req">*</span></label><input id="clf-web" placeholder="e.g. www.acme.co.uk"></div>' +
+    '<div class="clf-field"><label>Company phone <span class="req">*</span></label><input id="clf-cophone" placeholder="e.g. 0161 234 5678"></div>' +
+    '<div class="clf-field"><label>Location</label><input id="clf-loc" placeholder="e.g. Manchester"></div>' +
+    '<div class="clf-field"><label>Sector</label><input id="clf-sector" placeholder="e.g. Joinery & Shopfitting"></div>' +
+    '<div class="clf-field"><label>Industry</label><select id="clf-industry"><option value="">-- Select --</option>' + indOpts + '</select></div>' +
+    '<div class="clf-field"><label>Region</label><select id="clf-region"><option value="">-- Select --</option>' + regOpts + '</select></div>' +
+    '<div class="clf-field clf-full"><label>Description</label><textarea id="clf-desc" placeholder="Brief description of what this company does..."></textarea></div>' +
+    '<div class="clf-section">Contact</div>' +
+    '<div class="clf-field"><label>Contact name</label><input id="clf-contact" placeholder="e.g. John Smith"></div>' +
+    '<div class="clf-field"><label>Contact role</label><input id="clf-role" placeholder="e.g. Purchasing Manager"></div>' +
+    '<div class="clf-field"><label>Contact phone</label><input id="clf-phone" placeholder="Direct dial or mobile"></div>' +
+    '<div class="clf-field"><label>Email address</label><input id="clf-email" placeholder="e.g. john@acme.co.uk"></div>' +
+    '<div class="clf-section">SPP</div>' +
+    '<div class="clf-field"><label>Product range</label><select id="clf-product"><option value="">-- Select --</option>' + prOpts + '</select></div>' +
+    '<div class="clf-field clf-full"><label>SPP angle</label><textarea id="clf-hook" placeholder="Why is this company a good fit for SPP products?"></textarea></div>' +
+    '</div>' +
+    '<div class="clf-actions">' +
+    '<button class="btn-sm ghost" onclick="closeCreateLead()">Cancel</button>' +
+    '<button class="btn-sm" id="clf-save-btn" onclick="saveCreateLead()">Check &amp; save</button>' +
+    '</div>';
+  document.getElementById('create-lead-overlay').classList.add('open');
+}
+function closeCreateLead() {
+  document.getElementById('create-lead-overlay').classList.remove('open');
+}
+async function saveCreateLead() {
+  var name = (document.getElementById('clf-name').value || '').trim();
+  var web = (document.getElementById('clf-web').value || '').trim();
+  var cophone = (document.getElementById('clf-cophone').value || '').trim();
+  if (!name || !web || !cophone) { toast('Company name, website and company phone are required.', true); return; }
+  var btn = document.getElementById('clf-save-btn');
+  btn.disabled = true; btn.textContent = 'Checking...';
+  document.getElementById('create-lead-dup').style.display = 'none';
+  try {
+    var dupRes = await dataApi('checkDuplicate', { companyName: name, websiteUrl: web });
+    var dups = (dupRes && dupRes.value) || [];
+    if (dups.length > 0) {
+      var dupHtml = '<div class="dup-warning"><strong>Duplicate found \u2014 this lead already exists.</strong><br>';
+      dups.forEach(function(d) {
+        dupHtml += esc(d.Title);
+        if (d.ClaimedBy) dupHtml += ' \u2014 claimed by ' + esc(displayName(d.ClaimedBy));
+        else if (d.RejectedBy) dupHtml += ' \u2014 rejected by ' + esc(displayName(d.RejectedBy));
+        else if (d.TBCBy) dupHtml += ' \u2014 TBC by ' + esc(displayName(d.TBCBy));
+        else dupHtml += ' \u2014 unclaimed';
+        dupHtml += '<br>';
+      });
+      dupHtml += '</div>';
+      document.getElementById('create-lead-dup').innerHTML = dupHtml;
+      document.getElementById('create-lead-dup').style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Check & save';
+      return;
+    }
+    btn.textContent = 'Saving...';
+    var webUrl = web;
+    if (!/^https?:\/\//.test(webUrl)) webUrl = 'https://' + webUrl;
+    var emailDomain = normaliseUrl(web).replace(/\/.*$/, '');
+    var lead = {
+      Title: name,
+      WebsiteURL: webUrl,
+      CompanyPhoneNumber: cophone,
+      Location: (document.getElementById('clf-loc').value || '').trim(),
+      Sector: (document.getElementById('clf-sector').value || '').trim(),
+      Industry: document.getElementById('clf-industry').value || '',
+      Region: document.getElementById('clf-region').value || '',
+      Description: (document.getElementById('clf-desc').value || '').trim(),
+      ContactName: (document.getElementById('clf-contact').value || '').trim(),
+      ContactRole: (document.getElementById('clf-role').value || '').trim(),
+      PhoneNumber: (document.getElementById('clf-phone').value || '').trim(),
+      ContactEmail: (document.getElementById('clf-email').value || '').trim(),
+      ProductRange: document.getElementById('clf-product').value || '',
+      SPPProductHook: (document.getElementById('clf-hook').value || '').trim(),
+      EmailDomain: emailDomain,
+      ClaimedBy: ME.email,
+      ClaimedDate: nowISO(),
+      GeneratedBy: ME.email,
+      GeneratedDate: nowISO(),
+      SearchSession: 'manual-' + Date.now(),
+      URLStatus: 'Live'
+    };
+    await dataApi('createLead', { fields: lead });
+    closeCreateLead();
+    toast('Lead added and claimed to you.');
+    openClaimed();
+  } catch(e) {
+    toast('Error: ' + e.message, true);
+    btn.disabled = false; btn.textContent = 'Check & save';
+  }
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function openBTPanel(id) { openLeadModal(id); loadBTMatches(id); }
+function btTableHTML(rows) {
+  return '<div class="bt-match-table"><div class="bt-match-head" style="grid-template-columns:2fr 0.9fr 1fr 1.2fr;"><div>Customer</div><div>Rep</div><div>Status</div><div>Phone</div></div>' +
+    rows.map(m => '<div class="bt-match-row" style="grid-template-columns:2fr 0.9fr 1fr 1.2fr;"><div class="row-name">' + esc(m.Title) + '</div><div>' + esc(displayName(m.SalesRep || '')) + '</div><div>' + esc(m.CustomerStatus || '-') + '</div><div>' + (m.Telephone ? '<a class="card-url" href="tel:' + esc(String(m.Telephone).replace(/\s+/g, '')) + '">' + esc(m.Telephone) + '</a>' : '<span class="row-dim">-</span>') + '</div></div>').join('') + '</div>';
+}
+// Tokenise a company name the same way the GeneratesLeads flow does:
+// punctuation -> space, strip legal/joining words (lead only), drop a trailing
+// "s" on words of 4+ chars so plural/singular and possessives still match.
+const BT_STOPWORDS = ['limited','ltd','plc','llp','the','and','sons','co'];
+function btTokens(s, stripStopwords) {
+  let t = ' ' + String(s || '').toLowerCase() + ' ';
+  t = t.replace(/[.,&'"\/\-():;]/g, ' ').replace(/\s+/g, ' ').trim();
+  let arr = t.split(' ').filter(Boolean)
+    .map(function(w) { return (w.length >= 4 && w.charAt(w.length - 1) === 's') ? w.slice(0, -1) : w; });
+  if (stripStopwords) arr = arr.filter(function(w) { return BT_STOPWORDS.indexOf(w) === -1; });
+  return arr;
+}
+async function fetchBTRows(r) {
+  const leadTokens = btTokens(r.Title, true);
+  if (!leadTokens.length) return [];
+  // Candidate fetch: ask the backend for names containing the lead's first
+  // distinctive word (broad net), then filter precisely on the client.
+  const key = leadTokens[0].length >= 3 ? leadTokens[0] : leadTokens.join(' ').substring(0, 8);
+  const resp = await dataApi('searchBT', { domain: r.EmailDomain || '', name: key || 'zzz-skip' });
+  const rows = (resp && resp.value) || [];
+  // Keep a BT row only if EVERY lead word is present in its name (whole word,
+  // plural-tolerant). This is the same rule as the flow, so the badge and the
+  // compare list agree.
+  return rows.filter(function(m) {
+    const titleTokens = btTokens(m.Title, false);
+    return leadTokens.every(function(t) { return titleTokens.indexOf(t) !== -1; });
+  });
+}
+async function loadBTMatches(id) {
+  const r = findRow(id);
+  if (!r) return;
+  const panel = document.getElementById('bt-panel');
+  if (!panel) return;
+  panel.innerHTML = '<div class="modal-loading"><span class="mini-spin"></span> Searching 6,000 BT customer records - takes 10-20 seconds...</div>';
+  try {
+    const rows = await fetchBTRows(r);
+    panel.innerHTML = rows.length ? btTableHTML(rows) : '<div class="card-desc">No matching BT records found.</div>';
+  } catch (e) {
+    panel.innerHTML = '<div class="card-desc">Could not load BT records: ' + esc(e.message) + '</div>';
+  }
+}
+async function loadBTInline(id) {
+  const r = findRow(id);
+  const box = document.getElementById('bt-inline-' + id);
+  if (!r || !box) return;
+  box.innerHTML = '<div class="modal-loading"><span class="mini-spin"></span> Searching BT records - 10-20 seconds...</div>';
+  try {
+    const rows = await fetchBTRows(r);
+    box.innerHTML = rows.length ? btTableHTML(rows) : '<div class="card-desc">No matching BT records found.</div>';
+  } catch (e) {
+    box.innerHTML = '<div class="card-desc">Could not load BT records: ' + esc(e.message) + '</div>';
+  }
+}
+
+/* ---------------- auto-refresh when returning to the tab ---------------- */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !account) return;
+  if (document.getElementById('dialog-overlay').classList.contains('open')) return;
+  if (document.getElementById('modal-overlay').classList.contains('open')) return;
+  if (document.getElementById('screen-tbc').classList.contains('active')) openTBC(tbcMode);
+  else if (document.getElementById('screen-claimed').classList.contains('active')) openClaimed();
+  else if (document.getElementById('screen-prevsearch').classList.contains('active')) openPrevSearches();
+  else if (document.getElementById('screen-home').classList.contains('active')) loadHome();
+  else if (document.getElementById('screen-results').classList.contains('active') && !watchTimer) refreshResults();
+});
+
+/* ---------------- start ---------------- */
+initMsal();
+</script>
+</body>
+</html>
