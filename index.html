@@ -281,6 +281,23 @@ if (!PREVIEW_MODE) {
   .badge.clickable { cursor: pointer; }
   .badge.clickable:hover { box-shadow: var(--shadow-sm); }
 
+  .credit-info { background: var(--bg); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; }
+  .credit-row { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; }
+  .credit-score { font-family: 'Outfit', sans-serif; font-weight: 700; padding: 3px 10px; border-radius: 14px; font-size: 12px; }
+  .credit-score.cs-green { background: var(--green-bg); border: 1px solid var(--green-bd); color: var(--green); }
+  .credit-score.cs-amber { background: var(--amber-bg); border: 1px solid var(--amber-bd); color: var(--amber); }
+  .credit-score.cs-red { background: var(--red-bg); border: 1px solid var(--red-bd); color: var(--red); }
+  .credit-val { color: var(--text-2); }
+  .credit-val b { color: var(--text-1); font-weight: 600; }
+  .credit-stale { font-size: 12px; color: var(--amber); font-weight: 500; }
+  .credit-meta { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+  .cs-picker { background: var(--blue-bg); border: 1px solid var(--blue-bd); border-radius: var(--radius-sm); padding: 10px 12px; }
+  .cs-picker-title { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; color: var(--blue); margin-bottom: 6px; }
+  .cs-picker-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--blue-bd); font-size: 13px; gap: 8px; }
+  .cs-picker-row:last-child { border-bottom: none; }
+  .cs-picker-name { font-weight: 600; color: var(--text-1); flex: 1; }
+  .cs-picker-detail { color: var(--text-3); font-size: 12px; }
+
   .bt-info { font-size: 14px; color: var(--text-2); background: var(--bg); border-radius: var(--radius-sm); padding: 8px 11px; line-height: 1.5; }
 
   .detail-pair { display: flex; flex-direction: column; gap: 0; }
@@ -831,11 +848,11 @@ const CONFIG = {
 var PREVIEW = (typeof PREVIEW_MODE !== 'undefined' && PREVIEW_MODE) || /[?&#]preview/.test(window.location.href);
 if (PREVIEW) {
   var DEMO_LEADS = [
-    { Id:1, Title:'Acme Joinery Ltd', Location:'Manchester', Sector:'Joinery & Shopfitting', Description:'Large commercial joinery firm specialising in retail and hospitality fit-outs across the North West. Operates a 25,000 sq ft workshop with CNC capability.', SPPProductHook:'High user of birch plywood for shopfitting carcasses and display units. Contra-Burn treated boards for hotel and restaurant projects.', WebsiteURL:'https://www.example-acme.co.uk', EmailDomain:'example-acme.co.uk', ContactName:'James Wilson', ContactRole:'Purchasing Manager', PhoneNumber:'0161 234 5678', CompanyPhoneNumber:'0161 200 1000', ContactEmail:'james.wilson@example-acme.co.uk', BTMatch:'None', BTMatchCount:'0', Industry:'Joinery & Shopfitting', ProductRange:'Birch Plywood', Region:'North West', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', confidence_score:82 },
+    { Id:1, Title:'Acme Joinery Ltd', Location:'Manchester', Sector:'Joinery & Shopfitting', Description:'Large commercial joinery firm specialising in retail and hospitality fit-outs across the North West. Operates a 25,000 sq ft workshop with CNC capability.', SPPProductHook:'High user of birch plywood for shopfitting carcasses and display units. Contra-Burn treated boards for hotel and restaurant projects.', WebsiteURL:'https://www.example-acme.co.uk', EmailDomain:'example-acme.co.uk', ContactName:'James Wilson', ContactRole:'Purchasing Manager', PhoneNumber:'0161 234 5678', CompanyPhoneNumber:'0161 200 1000', ContactEmail:'james.wilson@example-acme.co.uk', BTMatch:'None', BTMatchCount:'0', Industry:'Joinery & Shopfitting', ProductRange:'Birch Plywood', Region:'North West', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', confidence_score:82, CreditStatus:'matched', CreditScore:'72', CreditRiskBand:'Low Risk', CreditLimit:'125000', ShareholderFunds:'450000', WorkingCapital:'82000', CreditPullDate:new Date().toISOString(), CreditConnectId:'GB-0-12345678' },
     { Id:2, Title:'Northern Stage Sets', Location:'Leeds', Sector:'Set Building & Events', Description:'Theatrical and event set builders working with major venues across Yorkshire. Known for large-scale temporary structures and exhibition stands.', SPPProductHook:'Pine plywood for lightweight scenic flats and temporary structures. Contra-Burn essential for public venue fire compliance.', WebsiteURL:'https://www.example-northern.co.uk', EmailDomain:'example-northern.co.uk', ContactName:'Sarah Patel', ContactRole:'Operations Director', PhoneNumber:'0113 987 6543', CompanyPhoneNumber:'0113 987 0000', ContactEmail:'sarah@example-northern.co.uk', BTMatch:'Possible', BTMatchCount:'1', BTStatus:'Active', BTRep:'John Smith', Industry:'Set Building & Events', ProductRange:'Pine Plywood', Region:'Yorkshire', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'Good', confidence_score:75 },
-    { Id:3, Title:'Precision Pods Manufacturing', Location:'Birmingham', Sector:'Modular Construction', Description:'Off-site modular bathroom and kitchen pod manufacturer supplying major housebuilders. ISO 9001 certified with capacity for 50 pods per week.', SPPProductHook:'Phenol-faced boards for moisture-resistant pod flooring and wall linings. Birch ply for structural elements.', WebsiteURL:'https://www.example-pods.co.uk', EmailDomain:'example-pods.co.uk', ContactName:'', ContactRole:'', PhoneNumber:'0121 456 7890', CompanyPhoneNumber:'0121 456 0000', ContactEmail:'', BTMatch:'None', BTMatchCount:'0', Industry:'Modular Construction', ProductRange:'Phenol Faced Boards', Region:'West Midlands', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', confidence_score:88 },
+    { Id:3, Title:'Precision Pods Manufacturing', Location:'Birmingham', Sector:'Modular Construction', Description:'Off-site modular bathroom and kitchen pod manufacturer supplying major housebuilders. ISO 9001 certified with capacity for 50 pods per week.', SPPProductHook:'Phenol-faced boards for moisture-resistant pod flooring and wall linings. Birch ply for structural elements.', WebsiteURL:'https://www.example-pods.co.uk', EmailDomain:'example-pods.co.uk', ContactName:'', ContactRole:'', PhoneNumber:'0121 456 7890', CompanyPhoneNumber:'0121 456 0000', ContactEmail:'', BTMatch:'None', BTMatchCount:'0', Industry:'Modular Construction', ProductRange:'Phenol Faced Boards', Region:'West Midlands', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', confidence_score:88, CreditStatus:'ambiguous', CreditCandidates:'[{"id":"GB-0-11111111","name":"Precision Pods Ltd","regNo":"11111111","type":"Ltd","address":{"simpleValue":"Birmingham"}},{"id":"GB-0-22222222","name":"Precision Pods Manufacturing Ltd","regNo":"22222222","type":"Ltd","address":{"simpleValue":"West Midlands"}}]' },
     { Id:4, Title:'Heritage Boat Builders', Location:'Southampton', Sector:'Marine & Boatbuilding', Description:'Specialist wooden boat restoration and new-build yard. Works with classic yacht owners and heritage trusts on vessels up to 60ft.', SPPProductHook:'Marine-grade birch plywood for hull linings, bulkheads and cabin furniture. Veneered panels for interior finishing.', WebsiteURL:'https://www.example-boats.co.uk', EmailDomain:'example-boats.co.uk', ContactName:'David Chen', ContactRole:'Yard Manager', PhoneNumber:'', CompanyPhoneNumber:'023 8045 6789', ContactEmail:'david.chen@example-boats.co.uk', BTMatch:'Confirmed', BTMatchCount:'1', BTStatus:'Active', BTRep:'Richard Claridge', BTLastNote:'Good account, orders quarterly', Industry:'Marine & Boatbuilding', ProductRange:'Birch Plywood', Region:'South East', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', ClaimedBy:'demo@spp.co.uk', ClaimedDate:new Date().toISOString(), confidence_score:71 },
-    { Id:5, Title:'Greenfield Acoustics', Location:'Bristol', Sector:'Acoustic Solutions', Description:'Designs and installs acoustic wall and ceiling panels for offices, studios and educational buildings. Growing fast with recent contracts for university lecture halls.', SPPProductHook:'Birch plywood as substrate for perforated acoustic panels. Contra-Burn treated boards for education sector fire compliance.', WebsiteURL:'https://www.example-acoustics.co.uk', EmailDomain:'example-acoustics.co.uk', ContactName:'Emma Brooks', ContactRole:'Technical Director', PhoneNumber:'0117 321 0000', CompanyPhoneNumber:'0117 321 0001', ContactEmail:'emma@example-acoustics.co.uk', BTMatch:'None', BTMatchCount:'0', Industry:'Acoustic Solutions', ProductRange:'Birch Plywood', Region:'South West', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', TBCBy:'demo@spp.co.uk', confidence_score:79 }
+    { Id:5, Title:'Greenfield Acoustics', Location:'Bristol', Sector:'Acoustic Solutions', Description:'Designs and installs acoustic wall and ceiling panels for offices, studios and educational buildings. Growing fast with recent contracts for university lecture halls.', SPPProductHook:'Birch plywood as substrate for perforated acoustic panels. Contra-Burn treated boards for education sector fire compliance.', WebsiteURL:'https://www.example-acoustics.co.uk', EmailDomain:'example-acoustics.co.uk', ContactName:'Emma Brooks', ContactRole:'Technical Director', PhoneNumber:'0117 321 0000', CompanyPhoneNumber:'0117 321 0001', ContactEmail:'emma@example-acoustics.co.uk', BTMatch:'None', BTMatchCount:'0', Industry:'Acoustic Solutions', ProductRange:'Birch Plywood', Region:'South West', GeneratedDate:new Date().toISOString(), GeneratedBy:'demo@spp.co.uk', SearchSession:'preview-session-1', URLStatus:'Live', QualityRating:'', TBCBy:'demo@spp.co.uk', confidence_score:79, CreditStatus:'none' }
   ];
 }
 
@@ -1379,8 +1396,9 @@ function updateDetailsBtns() {
 function detailBits(r, page) {
   var d = r.Description ? '<details class="collapse"' + (cardDetailsOpen(page) ? ' open' : '') + '><summary>Description</summary><div class="card-desc" style="padding-bottom:8px;">' + esc(r.Description) + '</div></details>' : '';
   var h = r.SPPProductHook ? '<details class="collapse"' + (cardDetailsOpen(page) ? ' open' : '') + '><summary>SPP angle</summary><div class="card-hook" style="margin-bottom:8px;">' + esc(r.SPPProductHook) + '</div></details>' : '';
-  if (!d && !h) return '';
-  return '<div class="detail-pair">' + d + h + '</div>';
+  var f = (r.CreditStatus === 'matched' && r.CreditScore) ? '<details class="collapse"' + (cardDetailsOpen(page) ? ' open' : '') + '><summary>Financials</summary>' + creditMatchedHTML(r) + '</details>' : '';
+  if (!d && !h && !f) return '';
+  return '<div class="detail-pair">' + d + h + f + '</div>';
 }
 function statusOf(r) {
   if (r.RejectedBy) return 'rejected';
@@ -1427,6 +1445,94 @@ function qualityRow(r) {
     '<button class="qual-btn q-ok' + (q === 'Neutral' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Neutral\')">OK</button>' +
     '<button class="qual-btn q-good' + (q === 'Good' ? ' selected' : '') + '" onclick="setQuality(' + r.Id + ',\'Good\')">Good</button></div>';
 }
+/* ---------------- creditsafe helpers ---------------- */
+var GBP = new Intl.NumberFormat('en-GB', {style:'currency', currency:'GBP', maximumFractionDigits:0});
+
+function csRiskClass(band) {
+  if (!band) return '';
+  var b = band.toLowerCase();
+  if (b.indexOf('very low risk') > -1 || b.indexOf('low risk') > -1) return 'cs-green';
+  if (b.indexOf('moderate') > -1) return 'cs-amber';
+  return 'cs-red';
+}
+
+function csStaleDays(pullDate) {
+  if (!pullDate) return 999;
+  return Math.floor((Date.now() - new Date(pullDate).getTime()) / 86400000);
+}
+
+function creditMatchedHTML(r) {
+  var cls = csRiskClass(r.CreditRiskBand);
+  var days = csStaleDays(r.CreditPullDate);
+  var stale = days > 60;
+  var pullStr = r.CreditPullDate ? new Date(r.CreditPullDate).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : '';
+  var html = '<div class="credit-info"><div class="credit-row">' +
+    '<span class="credit-score ' + cls + '">' + esc(r.CreditRiskBand) + ' (' + esc(r.CreditScore) + ')</span>';
+  if (r.CreditLimit && r.CreditLimit !== '0') html += '<span class="credit-val">Limit: <b>' + GBP.format(parseFloat(r.CreditLimit)) + '</b></span>';
+  html += '</div>';
+  if (r.ShareholderFunds || r.WorkingCapital) {
+    html += '<div class="credit-row" style="margin-top:3px;">';
+    if (r.ShareholderFunds) html += '<span class="credit-val">SH Funds: <b>' + GBP.format(parseFloat(r.ShareholderFunds)) + '</b></span>';
+    if (r.WorkingCapital) html += '<span class="credit-val">Working Cap: <b>' + GBP.format(parseFloat(r.WorkingCapital)) + '</b></span>';
+    html += '</div>';
+  }
+  html += '<div class="credit-meta">';
+  if (stale) html += '<span class="credit-stale">Data ' + days + ' days old</span> ';
+  else html += 'Pulled ' + pullStr + ' ';
+  if (stale || r.CreditConnectId) html += '<button class="btn-sm ghost" style="padding:2px 8px;font-size:11px;" onclick="event.stopPropagation();refreshCredit(' + r.Id + ')">Refresh</button>';
+  html += '</div></div>';
+  return html;
+}
+
+function creditPickerHTML(r) {
+  if (r.CreditStatus === 'ambiguous' && r.CreditCandidates) {
+    try {
+      var cands = JSON.parse(r.CreditCandidates);
+      if (!cands.length) return '';
+      var html = '<div class="cs-picker"><div class="cs-picker-title">Select Creditsafe match (' + cands.length + ' found)</div>';
+      cands.forEach(function(c) {
+        var addr = '';
+        if (c.address) addr = c.address.simpleValue || c.address.city || '';
+        html += '<div class="cs-picker-row"><span class="cs-picker-name">' + esc(c.name) + '</span>' +
+          '<span class="cs-picker-detail">' + esc(c.regNo || '') + (addr ? ' - ' + esc(addr) : '') + ' (' + esc(c.type || '') + ')</span>' +
+          '<button class="btn-sm" style="padding:4px 10px;font-size:12px;" onclick="event.stopPropagation();selectCreditMatch(' + r.Id + ',\'' + esc(c.id) + '\')">Select</button></div>';
+      });
+      html += '</div>';
+      return html;
+    } catch(e) { return ''; }
+  }
+  if (r.CreditStatus === 'none') {
+    return '<div style="font-size:12px;color:var(--text-3);padding:4px 0;">No Creditsafe match</div>';
+  }
+  return '';
+}
+
+async function refreshCredit(id) {
+  var row = findRow(id);
+  if (!row || !row.CreditConnectId) return;
+  toast('Refreshing credit data...');
+  try {
+    await dataApi('creditsafe', { itemId: String(id), connectId: row.CreditConnectId });
+    toast('Credit data refreshed - reloading...');
+    if (currentSession) {
+      var res = await dataApi('getLeads', { sessionId: currentSession });
+      if (res && res.value) { sessionRows = res.value; renderResults(); }
+    }
+  } catch(e) { toast('Refresh failed: ' + e.message, true); }
+}
+
+async function selectCreditMatch(leadId, connectId) {
+  toast('Pulling credit report...');
+  try {
+    await dataApi('creditsafe', { itemId: String(leadId), connectId: connectId });
+    toast('Credit data loaded - reloading...');
+    if (currentSession) {
+      var res = await dataApi('getLeads', { sessionId: currentSession });
+      if (res && res.value) { sessionRows = res.value; renderResults(); }
+    }
+  } catch(e) { toast('Credit check failed: ' + e.message, true); }
+}
+
 function cardHTML(r, page) {
   page = page || 'results';
   const st = statusOf(r);
@@ -1457,6 +1563,7 @@ function cardHTML(r, page) {
     '<div class="badge-row">' + urlBadge(r) + btBadge(r) + stateBadge + '</div>' +
     btInfo(r) +
     (parseInt(r.BTMatchCount || '0', 10) > 1 ? '<div id="bt-inline-' + r.Id + '"><button class="btn-sm ghost" style="width:100%;" onclick="loadBTInline(' + r.Id + ')">View all ' + parseInt(r.BTMatchCount, 10) + ' possible BT matches</button></div>' : '') +
+    creditPickerHTML(r) +
     detailBits(r, page) +
     (r.WebsiteURL ? '<a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">&#128279; ' + esc(hostOf(r.WebsiteURL)) + '</a>' : '') +
     (r.PhoneNumber ? '<a class="card-url" href="tel:' + esc(String(r.PhoneNumber).replace(/\s+/g, '')) + '">&#128222; ' + esc(r.PhoneNumber) + '</a>' : '') +
@@ -1534,7 +1641,7 @@ async function updateLead(id, fields, okMsg) {
     toast('Update failed: ' + e.message, true);
   }
 }
-function claimLead(id) { updateLead(id, { ClaimedBy: ME.email, ClaimedDate: nowISO() }, 'Lead claimed - it is yours.'); }
+function claimLead(id) { const row = findRow(id); if (row) row.__gone = true; updateLead(id, { ClaimedBy: ME.email, ClaimedDate: nowISO(), TBCBy: null, RejectedBy: null }, 'Lead claimed - it is yours.'); }
 async function unclaimLead(id) {
   const r = findRow(id);
   const ok = await showDialog({
@@ -1664,7 +1771,7 @@ function renderClaimed() {
   ).join('');
 }
 const EXPORT_GROUPS = [
-  { heading: 'Company', fields: [['Title', 'Company name'], ['Location', 'Location'], ['Sector', 'Sector'], ['Industry', 'Industry'], ['Description', 'Description'], ['WebsiteURL', 'Website'], ['EmailDomain', 'Email domain'], ['CompanyPhoneNumber', 'Company phone']] },
+  { heading: 'Company', fields: [['Title', 'Company name'], ['Location', 'Location'], ['Sector', 'Sector'], ['Industry', 'Industry'], ['Description', 'Description'], ['WebsiteURL', 'Website'], ['EmailDomain', 'Email domain'], ['CompanyPhoneNumber', 'Company phone'], ['CreditScore', 'Credit score'], ['CreditRiskBand', 'Risk band'], ['CreditLimit', 'Credit limit'], ['ShareholderFunds', 'Shareholder funds'], ['WorkingCapital', 'Working capital']] },
   { heading: 'Contact', fields: [['ContactName', 'Contact name'], ['ContactRole', 'Contact role'], ['PhoneNumber', 'Contact phone'], ['ContactEmail', 'Email address']] },
   { heading: 'SPP', fields: [['SPPProductHook', 'SPP angle'], ['ProductRange', 'Product range']] },
   { heading: 'Lead info', fields: [['Region', 'Region'], ['ClaimedDate', 'Claimed date'], ['QualityRating', 'Quality'], ['LeadNotes', 'Notes']] },
@@ -1826,7 +1933,9 @@ function openLeadModal(id, withNotes) {
     (r.RejectReason ? '<br>Rejected: ' + esc(r.RejectReason) : '') +
     '</div>' + editContactBtn(r) + '</div>' +
     btInfo(r) +
-    (count >= 1 ? '<div class="modal-section"><h4>BT customer records</h4><div id="bt-panel"><button class="btn-sm ghost" onclick="loadBTMatches(' + r.Id + ')">Load ' + (count > 1 ? 'all ' + count + ' matching records' : 'matching record') + '</button></div></div>' : '');
+    (count >= 1 ? '<div class="modal-section"><h4>BT customer records</h4><div id="bt-panel"><button class="btn-sm ghost" onclick="loadBTMatches(' + r.Id + ')">Load ' + (count > 1 ? 'all ' + count + ' matching records' : 'matching record') + '</button></div></div>' : '') +
+    ((r.CreditStatus === 'matched' && r.CreditScore) ? '<div class="modal-section"><h4>Financials</h4>' + creditMatchedHTML(r) + '</div>' : '') +
+    (creditPickerHTML(r) ? '<div class="modal-section">' + creditPickerHTML(r) + '</div>' : '');
   if (withNotes) {
     document.getElementById('modal-body').innerHTML = '<div class="modal-grid"><div>' + detail +
       '<div class="modal-section"><h4>Add a note</h4>' +
@@ -1995,8 +2104,7 @@ async function saveCreateLead() {
       GeneratedBy: ME.email,
       GeneratedDate: nowISO(),
       SearchSession: 'manual-' + Date.now(),
-      URLStatus: 'Live',
-      confidence_score: 0
+      URLStatus: 'Live'
     };
     await dataApi('createLead', { fields: lead });
     closeCreateLead();
