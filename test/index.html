@@ -1566,6 +1566,7 @@ function cardHTML(r, page) {
     creditPickerHTML(r) +
     detailBits(r, page) +
     (r.WebsiteURL ? '<a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">&#128279; ' + esc(hostOf(r.WebsiteURL)) + '</a>' : '') +
+    (r.CreditConnectId ? '<a class="card-url" href="https://app.creditsafe.com/companies/' + esc(r.CreditConnectId) + '" target="_blank" rel="noopener">&#128202; Show credit report</a>' : '') +
     (r.PhoneNumber ? '<a class="card-url" href="tel:' + esc(String(r.PhoneNumber).replace(/\s+/g, '')) + '">&#128222; ' + esc(r.PhoneNumber) + '</a>' : '') +
     (r.ContactEmail ? '<a class="card-url" href="mailto:' + esc(r.ContactEmail) + '">&#9993; ' + esc(r.ContactEmail) + '</a>' : '') +
     '<div class="card-spacer"></div>' + actions + qualityRow(r) + '</div>';
