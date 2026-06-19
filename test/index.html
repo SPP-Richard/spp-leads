@@ -1067,15 +1067,33 @@ async function bootApp() {
     const rows = (dd && dd.value) || [];
     dropdowns = { Industry: [], ProductRange: [], Region: [], RejectReason: [] };
     userMap = {};
+    // Tolerant parsing: the DropdownOptions list may expose either
+    // OptionType/Title/IsActive or Category/DisplayText/Active, and the reject-reason
+    // category may be labelled "RejectReason", "Reject Reason", "Reason", etc.
+    const normType = function(t) {
+      const k = String(t || '').toLowerCase().replace(/[^a-z]/g, '');
+      if (k.indexOf('reject') > -1 || k === 'reason' || k === 'rejectionreason') return 'RejectReason';
+      if (k.indexOf('industry') > -1) return 'Industry';
+      if (k.indexOf('product') > -1) return 'ProductRange';
+      if (k.indexOf('region') > -1) return 'Region';
+      if (k.indexOf('userdisplay') > -1 || k === 'user') return 'UserDisplay';
+      return t;
+    };
+    const isYes = function(v) {
+      if (v == null || v === '') return true; // no active flag = treat as active
+      return v === true || ['yes', 'true', 'active', '1', 'y'].indexOf(String(v).toLowerCase()) > -1;
+    };
     rows.forEach(r => {
-      if (!r.Title || !r.OptionType) return;
-      if (r.OptionType === 'UserDisplay') {
-        const parts = r.Title.split('|');
+      const title = r.Title || r.DisplayText || '';
+      const type = normType(r.OptionType || r.Category || '');
+      if (!title || !type) return;
+      if (type === 'UserDisplay') {
+        const parts = String(title).split('|');
         if (parts.length === 2) userMap[parts[0].toLowerCase().trim()] = parts[1].trim();
         return;
       }
-      if (r.IsActive !== 'Yes') return;
-      if (dropdowns[r.OptionType]) dropdowns[r.OptionType].push(r);
+      if (!isYes(r.IsActive != null ? r.IsActive : r.Active)) return;
+      if (dropdowns[type]) dropdowns[type].push({ Title: title, SortOrder: Number(r.SortOrder) || 0 });
     });
     Object.keys(dropdowns).forEach(k => dropdowns[k].sort((a, b) => (a.SortOrder || 0) - (b.SortOrder || 0)));
     fillSelect('gen-industry', dropdowns.Industry);
@@ -1448,6 +1466,18 @@ function qualityRow(r) {
 /* ---------------- creditsafe helpers ---------------- */
 var GBP = new Intl.NumberFormat('en-GB', {style:'currency', currency:'GBP', maximumFractionDigits:0});
 
+// Build a Creditsafe portal report URL from the reg number (no API call needed).
+// connectId form is GB-0-<regNo>: plain numbers pad to 8 digits (e.g. 03500652),
+// SC / NI / OC prefixed numbers are kept as-is (e.g. SC389805, NI010862).
+// Prefers an API-supplied CreditConnectId if one is ever present.
+function creditsafeUrl(r) {
+  if (r.CreditConnectId) return 'https://app.creditsafe.com/companies/' + r.CreditConnectId;
+  var reg = (r.CompanyRegNum || '').toString().trim().toUpperCase().replace(/\s+/g, '');
+  if (!reg) return '';
+  var id = /^[0-9]+$/.test(reg) ? reg.padStart(8, '0') : reg;
+  return 'https://app.creditsafe.com/companies/GB-0-' + id;
+}
+
 function csRiskClass(band) {
   if (!band) return '';
   var b = band.toLowerCase();
@@ -1549,7 +1579,9 @@ function cardHTML(r, page) {
       '<button class="action-btn action-claim" onclick="claimLead(' + r.Id + ')">Claim</button></div>';
   } else if (st === 'tbc') {
     actions = '<div class="card-actions">' +
+      '<button class="action-btn action-reject" onclick="rejectLead(' + r.Id + ')">No Opportunity</button>' +
       '<button class="action-btn action-tbc" onclick="undoTBC(' + r.Id + ')">Undo TBC</button>' +
+      '<button class="action-btn action-tbc" onclick="sendToTBC(' + r.Id + ')">Send to&hellip;</button>' +
       '<button class="action-btn action-claim" onclick="claimLead(' + r.Id + ')">Claim</button></div>';
   } else if (st === 'rejected') {
     actions = '<div class="card-actions">' +
@@ -1566,7 +1598,7 @@ function cardHTML(r, page) {
     creditPickerHTML(r) +
     detailBits(r, page) +
     (r.WebsiteURL ? '<a class="card-url" href="' + esc(r.WebsiteURL) + '" target="_blank" rel="noopener">&#128279; ' + esc(hostOf(r.WebsiteURL)) + '</a>' : '') +
-    (r.CreditConnectId ? '<a class="card-url" href="https://app.creditsafe.com/companies/' + esc(r.CreditConnectId) + '" target="_blank" rel="noopener">&#128202; Show credit report</a>' : '') +
+    (creditsafeUrl(r) ? '<a class="card-url" href="' + esc(creditsafeUrl(r)) + '" target="_blank" rel="noopener">&#128202; Show credit report</a>' : '') +
     (r.PhoneNumber ? '<a class="card-url" href="tel:' + esc(String(r.PhoneNumber).replace(/\s+/g, '')) + '">&#128222; ' + esc(r.PhoneNumber) + '</a>' : '') +
     (r.ContactEmail ? '<a class="card-url" href="mailto:' + esc(r.ContactEmail) + '">&#9993; ' + esc(r.ContactEmail) + '</a>' : '') +
     '<div class="card-spacer"></div>' + actions + qualityRow(r) + '</div>';
@@ -1632,8 +1664,11 @@ function findRow(id) {
 async function updateLead(id, fields, okMsg) {
   try {
     await dataApi('update', { itemId: String(id), fields: fields });
-    const row = findRow(id);
-    if (row) Object.assign(row, fields);
+    // Update every copy of this lead across all in-memory arrays, otherwise the
+    // visible page can render a stale copy (e.g. quality stays on the old choice).
+    [sessionRows, tbcRows, claimedRows].forEach(function(arr) {
+      arr.forEach(function(r) { if (r.Id === id) Object.assign(r, fields); });
+    });
     renderResults();
     if (document.getElementById('screen-tbc').classList.contains('active')) renderTBC();
     if (document.getElementById('screen-claimed').classList.contains('active')) renderClaimed();
@@ -1864,9 +1899,9 @@ function renderTBC() {
   const grid = document.getElementById('tbc-grid');
   if (tbcMode === 'mine') {
     grid.style.display = 'block';
-    const cols = '3fr 1fr 1.4fr';
+    const cols = '2.4fr 0.9fr 1.7fr 2fr';
     grid.innerHTML = open.length === 0 ? '' :
-      '<div class="lead-table"><div class="table-head" style="grid-template-columns:' + cols + ';"><div>Company</div><div>Generated</div><div></div></div>' +
+      '<div class="lead-table"><div class="table-head" style="grid-template-columns:' + cols + ';"><div>Company</div><div>Generated</div><div>Lead quality</div><div></div></div>' +
       open.map(r => {
         let btns;
         if (r.RejectedBy) {
@@ -1877,12 +1912,15 @@ function renderTBC() {
             : '<span class="row-dim">Claimed by ' + esc(displayName(r.ClaimedBy)) + '</span>';
         } else {
           btns = '<button class="btn-unclaim" style="color:var(--text-2);border-color:var(--border);" onclick="undoTBC(' + r.Id + ')">Undo TBC</button>' +
-            '<button class="btn-unclaim" style="color:var(--green);border-color:var(--green-bd);" onclick="claimLead(' + r.Id + ')">Claim</button>';
+            '<button class="btn-unclaim" style="color:var(--green);border-color:var(--green-bd);" onclick="claimLead(' + r.Id + ')">Claim</button>' +
+            '<button class="btn-unclaim" style="color:var(--navy);border-color:var(--border);" onclick="sendToTBC(' + r.Id + ')">Send to&hellip;</button>' +
+            '<button class="btn-unclaim" style="color:var(--amber);border-color:var(--amber-bd);" onclick="rejectLead(' + r.Id + ')">Reject</button>';
         }
         return '<div class="table-row" style="grid-template-columns:' + cols + ';" onclick="openLeadModal(' + r.Id + ', true)">' +
         '<div class="row-name">' + esc(r.Title) + (r.LeadNotes ? ' <span class="row-dim" title="Has notes">&#128221;</span>' : '') + '</div>' +
         '<div class="row-dim">' + fmtDate(r.GeneratedDate) + '</div>' +
-        '<div onclick="event.stopPropagation()" style="display:flex;gap:8px;justify-content:flex-end;">' + btns + '</div></div>';
+        claimedQualityCell(r) +
+        '<div class="claimed-actions" onclick="event.stopPropagation()">' + btns + '</div></div>';
       }).join('') + '</div>';
   } else {
     grid.style.display = '';
@@ -1929,6 +1967,7 @@ function openLeadModal(id, withNotes) {
     (r.PhoneNumber ? 'Phone (contact): <a class="card-url" href="tel:' + esc(String(r.PhoneNumber).replace(/\s+/g, '')) + '">' + esc(r.PhoneNumber) + '</a><br>' : '') +
     (r.CompanyPhoneNumber ? 'Phone (company): <a class="card-url" href="tel:' + esc(String(r.CompanyPhoneNumber).replace(/\s+/g, '')) + '">' + esc(r.CompanyPhoneNumber) + '</a><br>' : '') +
     (r.ContactEmail ? 'Email: <a class="card-url" href="mailto:' + esc(r.ContactEmail) + '">' + esc(r.ContactEmail) + '</a><br>' : '') +
+    (r.CompanyRegNum ? 'Company reg: ' + esc(r.CompanyRegNum) + (creditsafeUrl(r) ? ' &middot; <a class="card-url" href="' + esc(creditsafeUrl(r)) + '" target="_blank" rel="noopener">&#128202; Show credit report</a>' : '') + '<br>' : '') +
     'Generated ' + fmtDate(r.GeneratedDate) + ' by ' + esc(displayName(r.GeneratedBy)) +
     (r.ClaimedBy ? '<br>Claimed by ' + esc(displayName(r.ClaimedBy)) + ' on ' + fmtDate(r.ClaimedDate) : '') +
     (r.RejectReason ? '<br>Rejected: ' + esc(r.RejectReason) : '') +
