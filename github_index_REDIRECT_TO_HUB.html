@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SPP Lead Generator has moved</title>
+<meta name="robots" content="noindex, nofollow">
+
+<!-- ================================================================
+     Redirect target. Two sensible choices:
+
+       "https://hub.spp.co.uk/"             <- hub home, user clicks Lead Gen
+       "https://hub.spp.co.uk/leadgen.html" <- straight into the app, no hub chrome
+
+     Set to the hub home so old bookmarks retrain onto the hub. Swap to the
+     second line if you would rather people land directly in the app.
+     ================================================================ -->
+<script>
+  var HUB_URL = "https://hub.spp.co.uk/";
+</script>
+
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f4f6f8; color: #1b2a3a;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+  }
+  .wrap { max-width: 460px; padding: 32px 24px; }
+  h1 { font-size: 20px; margin: 0 0 12px; font-weight: 700; }
+  p  { font-size: 15px; line-height: 1.5; margin: 0 0 18px; color: #4a5b6c; }
+  a.btn {
+    display: inline-block; padding: 12px 28px; border-radius: 6px;
+    background: #1b2a3a; color: #fff; text-decoration: none; font-weight: 600; font-size: 15px;
+  }
+  a.btn:hover { background: #2c4258; }
+  .small { font-size: 12px; color: #7a8896; margin-top: 20px; }
+  code { background: #e6eaee; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>The Lead Generator has moved</h1>
+  <p>It now lives on the SPP hub. You should be redirected automatically in a moment.</p>
+  <p><a class="btn" id="go" href="#">Go to the Lead Generator</a></p>
+  <p class="small">Please update your bookmark. If nothing happens, use the button above.</p>
+</div>
+
+<script>
+(function () {
+  // Carry over any query string and #lead=... deep link so shared links still
+  // land on the right lead rather than the app's front page.
+  var tail = (window.location.search || '') + (window.location.hash || '');
+  var target = HUB_URL + tail;
+
+  var btn = document.getElementById('go');
+  if (btn) btn.setAttribute('href', target);
+
+  // replace() rather than assign() so Back does not bounce the user
+  // straight back into this redirect page.
+  window.location.replace(target);
+})();
+</script>
+
+</body>
+</html>
